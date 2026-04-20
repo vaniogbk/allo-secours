@@ -9,33 +9,30 @@ import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 
 final allClientsProvider = StreamProvider<List<UserModel>>((ref) {
+  final userAsync = ref.watch(userStreamProvider);
+  final user = userAsync.valueOrNull;
+  if (user == null || user.role != 'admin') {
+    return Stream.value([]);
+  }
   return FirebaseFirestore.instance
       .collection('users')
       .where('role', isEqualTo: 'client')
       .orderBy('createdAt', descending: true)
       .snapshots()
-      .map((s) => s.docs.map((d) => UserModel.fromDoc(d)).toList());
+      .map((s) =>
+          s.docs.map((d) => UserModel.fromDoc(d)).toList());
 });
 
-class AdminClientsScreen extends ConsumerWidget {
+class AdminClientsScreen extends ConsumerStatefulWidget {
   const AdminClientsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const AdminClientsScreenEmbedded();
-  }
+  ConsumerState<AdminClientsScreen> createState() =>
+      _AdminClientsScreenState();
 }
 
-class AdminClientsScreenEmbedded extends ConsumerStatefulWidget {
-  const AdminClientsScreenEmbedded({super.key});
-
-  @override
-  ConsumerState<AdminClientsScreenEmbedded> createState() =>
-      _AdminClientsScreenEmbeddedState();
-}
-
-class _AdminClientsScreenEmbeddedState
-    extends ConsumerState<AdminClientsScreenEmbedded> {
+class _AdminClientsScreenState
+    extends ConsumerState<AdminClientsScreen> {
   String _search = '';
 
   @override
@@ -43,8 +40,9 @@ class _AdminClientsScreenEmbeddedState
     final clientsAsync = ref.watch(allClientsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
         title: const Text('Gestion des clients'),
         bottom: PreferredSize(
@@ -56,12 +54,13 @@ class _AdminClientsScreenEmbeddedState
               decoration: InputDecoration(
                 hintText: 'Rechercher un client...',
                 prefixIcon: const Icon(Icons.search_rounded,
-                    size: 20, color: AppColors.textSecondary),
-                fillColor: Colors.white,
+                    size: 20),
+                fillColor: AppColors.background,
                 filled: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -81,21 +80,27 @@ class _AdminClientsScreenEmbeddedState
                     c.phone.contains(q))
                 .toList();
           }
+
           if (filtered.isEmpty) {
             return const EmptyStateWidget(
               icon: Icons.people_outline_rounded,
               title: 'Aucun client trouvé',
             );
           }
+
           return ListView.separated(
             padding: const EdgeInsets.all(AppDimensions.paddingM),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _ClientCard(client: filtered[i]),
+            separatorBuilder: (_, __) =>
+                const SizedBox(height: 8),
+            itemBuilder: (_, i) =>
+                _ClientCard(client: filtered[i]),
           );
         },
-        loading: () => const ShimmerList(count: 5, itemHeight: 80),
-        error: (e, _) => Center(child: Text('Erreur: $e')),
+        loading: () =>
+            const ShimmerList(count: 5, itemHeight: 80),
+        error: (e, _) =>
+            Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -147,7 +152,8 @@ class _ClientCard extends ConsumerWidget {
                   children: [
                     Text(client.fullName,
                         style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
                     if (client.isBlocked) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -155,23 +161,27 @@ class _ClientCard extends ConsumerWidget {
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppColors.error,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius:
+                              BorderRadius.circular(10),
                         ),
                         child: const Text('Bloqué',
                             style: TextStyle(
                                 fontSize: 9,
                                 color: Colors.white,
-                                fontWeight: FontWeight.w700)),
+                                fontWeight:
+                                    FontWeight.w700)),
                       ),
                     ],
                   ],
                 ),
                 Text(client.email,
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                        fontSize: 12,
+                        color: AppColors.textSecondary)),
                 Text(client.phone,
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                        fontSize: 12,
+                        color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -179,10 +189,11 @@ class _ClientCard extends ConsumerWidget {
             icon: const Icon(Icons.more_vert_rounded,
                 color: AppColors.textSecondary),
             onSelected: (v) =>
-                _handleAction(context, ref, v, client),
+                _handleAction(context, ref, v),
             itemBuilder: (_) => [
               PopupMenuItem(
-                value: client.isBlocked ? 'unblock' : 'block',
+                value:
+                    client.isBlocked ? 'unblock' : 'block',
                 child: Row(
                   children: [
                     Icon(
@@ -208,20 +219,21 @@ class _ClientCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleAction(BuildContext context, WidgetRef ref,
-      String action, UserModel client) async {
-    if (action == 'block' || action == 'unblock') {
-      final block = action == 'block';
-      await ref.read(authServiceProvider).updateUser(client.id, {
-        'isBlocked': block,
-      });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text(block ? 'Client bloqué' : 'Client débloqué')),
-        );
-      }
+  Future<void> _handleAction(
+      BuildContext context, WidgetRef ref, String action) async {
+    final block = action == 'block';
+    await ref
+        .read(authServiceProvider)
+        .updateUser(client.id, {'isBlocked': block});
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(block ? 'Client bloqué' : 'Client débloqué'),
+          backgroundColor:
+              block ? AppColors.error : AppColors.success,
+        ),
+      );
     }
   }
 }

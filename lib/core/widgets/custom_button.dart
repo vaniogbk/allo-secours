@@ -14,7 +14,6 @@ class CustomButton extends StatelessWidget {
   final bool fullWidth;
   final IconData? prefixIcon;
   final IconData? suffixIcon;
-  final Widget? child;
 
   const CustomButton({
     super.key,
@@ -26,19 +25,22 @@ class CustomButton extends StatelessWidget {
     this.fullWidth = true,
     this.prefixIcon,
     this.suffixIcon,
-    this.child,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: fullWidth ? double.infinity : null,
-      height: _getHeight(),
+      height: _height(),
       child: _buildButton(),
     );
   }
 
   Widget _buildButton() {
+    final content = _buildContent();
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+    );
     switch (variant) {
       case ButtonVariant.outline:
         return OutlinedButton(
@@ -46,16 +48,9 @@ class CustomButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary, width: 1.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            ),
+            shape: shape,
           ),
-          child: _buildContent(AppColors.primary),
-        );
-      case ButtonVariant.ghost:
-        return TextButton(
-          onPressed: isLoading ? null : onPressed,
-          child: _buildContent(AppColors.primary),
+          child: content,
         );
       case ButtonVariant.danger:
         return ElevatedButton(
@@ -64,11 +59,9 @@ class CustomButton extends StatelessWidget {
             backgroundColor: AppColors.error,
             foregroundColor: AppColors.white,
             elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            ),
+            shape: shape,
           ),
-          child: _buildContent(AppColors.white),
+          child: content,
         );
       case ButtonVariant.secondary:
         return ElevatedButton(
@@ -77,29 +70,34 @@ class CustomButton extends StatelessWidget {
             backgroundColor: AppColors.secondary,
             foregroundColor: AppColors.white,
             elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            ),
+            shape: shape,
           ),
-          child: _buildContent(AppColors.white),
+          child: content,
         );
-      case ButtonVariant.primary:
+      case ButtonVariant.ghost:
+        return TextButton(
+          onPressed: isLoading ? null : onPressed,
+          child: content,
+        );
+      default:
         return ElevatedButton(
           onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.white,
             elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            ),
+            shape: shape,
           ),
-          child: _buildContent(AppColors.white),
+          child: content,
         );
     }
   }
 
-  Widget _buildContent(Color color) {
+  Widget _buildContent() {
+    final color = variant == ButtonVariant.outline ||
+            variant == ButtonVariant.ghost
+        ? AppColors.primary
+        : AppColors.white;
     if (isLoading) {
       return SizedBox(
         width: 20,
@@ -107,49 +105,48 @@ class CustomButton extends StatelessWidget {
         child: CircularProgressIndicator(color: color, strokeWidth: 2),
       );
     }
-    if (child != null) return child!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (prefixIcon != null) ...[
-          Icon(prefixIcon, size: _getIconSize(), color: color),
+          Icon(prefixIcon, size: _iconSize(), color: color),
           const SizedBox(width: 8),
         ],
-        Text(label, style: TextStyle(
-          fontSize: _getFontSize(),
-          fontWeight: FontWeight.w600,
-          color: color,
-        )),
+        Text(label,
+            style: TextStyle(
+                fontSize: _fontSize(),
+                fontWeight: FontWeight.w600,
+                color: color)),
         if (suffixIcon != null) ...[
           const SizedBox(width: 8),
-          Icon(suffixIcon, size: _getIconSize(), color: color),
+          Icon(suffixIcon, size: _iconSize(), color: color),
         ],
       ],
     );
   }
 
-  double _getHeight() {
+  double _height() {
     switch (size) {
       case ButtonSize.small: return 36;
       case ButtonSize.large: return 56;
-      case ButtonSize.medium: return 48;
+      default: return 48;
     }
   }
 
-  double _getFontSize() {
+  double _fontSize() {
     switch (size) {
       case ButtonSize.small: return 13;
       case ButtonSize.large: return 16;
-      case ButtonSize.medium: return 15;
+      default: return 15;
     }
   }
 
-  double _getIconSize() {
+  double _iconSize() {
     switch (size) {
       case ButtonSize.small: return 16;
       case ButtonSize.large: return 22;
-      case ButtonSize.medium: return 18;
+      default: return 18;
     }
   }
 }

@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -25,14 +25,21 @@ class AuthService {
       email: email,
       phone: phone,
       role: UserRole.client,
+      isBlocked: false,
       createdAt: DateTime.now(),
     );
 
-    await _db.collection('users').doc(user.id).set(user.toMap());
+    await _db
+        .collection('users')
+        .doc(user.id)
+        .set(user.toMap());
     return user;
   }
 
-  Future<UserModel> login({required String email, required String password}) async {
+  Future<UserModel> login({
+    required String email,
+    required String password,
+  }) async {
     final cred = await _auth.signInWithEmailAndPassword(
         email: email, password: password);
     return await getUser(cred.user!.uid);

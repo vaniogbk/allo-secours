@@ -12,36 +12,18 @@ class AppDateUtils {
   static String formatDateTime(DateTime date) =>
       DateFormat('dd MMM yyyy, HH:mm', 'fr_FR').format(date);
 
-  static String formatTime(DateTime date) =>
-      DateFormat('HH:mm').format(date);
-
-  static String formatDateRange(DateTime start, DateTime end) =>
-      '${formatDate(start)} - ${formatDate(end)}';
-
   static int daysBetween(DateTime start, DateTime end) =>
       end.difference(start).inDays;
 
   static bool isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  static bool isToday(DateTime date) => isSameDay(date, DateTime.now());
-
-  static bool isPast(DateTime date) => date.isBefore(DateTime.now());
-
-  static bool isFuture(DateTime date) => date.isAfter(DateTime.now());
-
   static String timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inSeconds < 60) return 'A l\'instant';
+    if (diff.inSeconds < 60) return 'À l\'instant';
     if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'Il y a ${diff.inHours}h';
     if (diff.inDays < 7) return 'Il y a ${diff.inDays} jour(s)';
     return formatDate(date);
   }
-
-  static DateTime startOfDay(DateTime date) =>
-      DateTime(date.year, date.month, date.day);
-
-  static DateTime endOfDay(DateTime date) =>
-      DateTime(date.year, date.month, date.day, 23, 59, 59);
 }

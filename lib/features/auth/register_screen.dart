@@ -49,22 +49,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur : ${e.toString()}')),
+        SnackBar(
+          content: Text(_parseError(e.toString())),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  String _parseError(String e) {
+    if (e.contains('email-already-in-use')) {
+      return 'Cet email est déjà utilisé';
+    }
+    if (e.contains('weak-password')) return 'Mot de passe trop faible';
+    if (e.contains('invalid-email')) return 'Email invalide';
+    return 'Erreur lors de la création du compte';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
-        ),
-      ),
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -73,19 +81,45 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Créer un compte',
-                    style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () => context.go('/auth/login'),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusS),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_rounded,
+                      size: 18,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'Créer un compte',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                const Text('Rejoignez LogiTrack dès aujourd\'hui',
-                    style: TextStyle(
-                        fontSize: 15, color: AppColors.textSecondary)),
+                const Text(
+                  'Rejoignez LogiTrack dès aujourd\'hui',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 32),
                 CustomTextField(
                   label: 'Nom complet',
-                  hint: 'Roger DJOSSOU',
+                  hint: 'Jean Dupont',
                   controller: _nameCtrl,
                   prefixIcon: Icons.person_outline_rounded,
                   textCapitalization: TextCapitalization.words,
@@ -134,19 +168,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onPressed: _register,
                   isLoading: _loading,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Déjà un compte ? ',
-                        style: TextStyle(color: AppColors.textSecondary)),
-                    TextButton(
-                      onPressed: () => context.go('/auth/login'),
-                      child: const Text('Se connecter',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Déjà un compte ? ',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 15,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.go('/auth/login'),
+                      child: const Text(
+                        'Se connecter',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColors.primary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

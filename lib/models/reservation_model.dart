@@ -42,7 +42,8 @@ class ReservationModel {
   });
 
   int get totalDays => endDate.difference(startDate).inDays;
-  String get carFullName => '${carBrand ?? ''} ${carModel ?? ''}'.trim();
+  String get carFullName =>
+      '${carBrand ?? ''} ${carModel ?? ''}'.trim();
 
   String get statusLabel {
     switch (status) {
@@ -71,13 +72,15 @@ class ReservationModel {
       totalPrice: (map['totalPrice'] ?? 0).toDouble(),
       status: _parseStatus(map['status']),
       cancellationReason: map['cancellationReason'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt:
+          (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
 
   factory ReservationModel.fromDoc(DocumentSnapshot doc) =>
-      ReservationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      ReservationModel.fromMap(
+          doc.data() as Map<String, dynamic>, doc.id);
 
   static ReservationStatus _parseStatus(String? value) {
     switch (value) {
@@ -105,19 +108,33 @@ class ReservationModel {
         'status': status.name,
         'cancellationReason': cancellationReason,
         'createdAt': Timestamp.fromDate(createdAt),
-        'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+        'updatedAt':
+            updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       };
 
-  ReservationModel copyWith({ReservationStatus? status, String? cancellationReason, DateTime? updatedAt}) {
+  ReservationModel copyWith({
+    ReservationStatus? status,
+    String? cancellationReason,
+    DateTime? updatedAt,
+  }) {
     return ReservationModel(
-      id: id, userId: userId, carId: carId,
-      carBrand: carBrand, carModel: carModel, carPhoto: carPhoto,
-      userName: userName, userPhone: userPhone,
-      startDate: startDate, endDate: endDate,
-      pricePerDay: pricePerDay, deposit: deposit, totalPrice: totalPrice,
+      id: id,
+      userId: userId,
+      carId: carId,
+      carBrand: carBrand,
+      carModel: carModel,
+      carPhoto: carPhoto,
+      userName: userName,
+      userPhone: userPhone,
+      startDate: startDate,
+      endDate: endDate,
+      pricePerDay: pricePerDay,
+      deposit: deposit,
+      totalPrice: totalPrice,
       status: status ?? this.status,
       cancellationReason: cancellationReason ?? this.cancellationReason,
-      createdAt: createdAt, updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

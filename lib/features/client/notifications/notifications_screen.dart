@@ -30,9 +30,11 @@ class NotificationsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: user != null
-                ? () => NotificationService.markAllAsRead(user.uid)
+                ? () =>
+                    NotificationService.markAllAsRead(user.uid)
                 : null,
-            child: const Text('Tout lire'),
+            child: const Text('Tout lire',
+                style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -42,18 +44,22 @@ class NotificationsScreen extends ConsumerWidget {
             return const EmptyStateWidget(
               icon: Icons.notifications_none_rounded,
               title: 'Aucune notification',
-              subtitle: 'Vous n\'avez pas de notification pour le moment',
+              subtitle: 'Vous n\'avez pas de notification',
             );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(AppDimensions.paddingM),
             itemCount: notifs.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _NotifCard(notif: notifs[i]),
+            separatorBuilder: (_, __) =>
+                const SizedBox(height: 8),
+            itemBuilder: (_, i) =>
+                _NotifCard(notif: notifs[i]),
           );
         },
-        loading: () => const ShimmerList(count: 5, itemHeight: 80),
-        error: (e, _) => Center(child: Text('Erreur: $e')),
+        loading: () =>
+            const ShimmerList(count: 5, itemHeight: 80),
+        error: (e, _) =>
+            Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -71,10 +77,14 @@ class _NotifCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: notif.isRead ? Colors.white : AppColors.primaryLight,
+          color: notif.isRead
+              ? Colors.white
+              : AppColors.primaryLight,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: notif.isRead ? AppColors.border : AppColors.primary.withOpacity(0.3),
+            color: notif.isRead
+                ? AppColors.border
+                : AppColors.primary.withOpacity(0.3),
           ),
         ),
         child: Row(
@@ -83,7 +93,8 @@ class _NotifCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _typeColor(notif.type).withOpacity(0.15),
+                color:
+                    _typeColor(notif.type).withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(_typeIcon(notif.type),
@@ -97,13 +108,14 @@ class _NotifCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(notif.title,
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: notif.isRead
-                                    ? FontWeight.w500
-                                    : FontWeight.w700,
-                                color: AppColors.textPrimary)),
+                        child: Text(
+                          notif.title,
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: notif.isRead
+                                  ? FontWeight.w500
+                                  : FontWeight.w700),
+                        ),
                       ),
                       if (!notif.isRead)
                         Container(
@@ -118,13 +130,17 @@ class _NotifCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(notif.body,
                       style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary),
+                          fontSize: 12,
+                          color: AppColors.textSecondary),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 6),
-                  Text(AppDateUtils.timeAgo(notif.createdAt),
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.textHint)),
+                  Text(
+                    AppDateUtils.timeAgo(notif.createdAt),
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textHint),
+                  ),
                 ],
               ),
             ),
@@ -136,19 +152,27 @@ class _NotifCard extends StatelessWidget {
 
   IconData _typeIcon(NotificationType t) {
     switch (t) {
-      case NotificationType.reservation: return Icons.directions_car_rounded;
-      case NotificationType.parcel: return Icons.inventory_2_rounded;
-      case NotificationType.payment: return Icons.payment_rounded;
-      case NotificationType.system: return Icons.info_rounded;
+      case NotificationType.reservation:
+        return Icons.directions_car_rounded;
+      case NotificationType.parcel:
+        return Icons.inventory_2_rounded;
+      case NotificationType.payment:
+        return Icons.payment_rounded;
+      case NotificationType.system:
+        return Icons.info_rounded;
     }
   }
 
   Color _typeColor(NotificationType t) {
     switch (t) {
-      case NotificationType.reservation: return AppColors.primary;
-      case NotificationType.parcel: return AppColors.secondary;
-      case NotificationType.payment: return AppColors.accent;
-      case NotificationType.system: return AppColors.info;
+      case NotificationType.reservation:
+        return AppColors.primary;
+      case NotificationType.parcel:
+        return AppColors.secondary;
+      case NotificationType.payment:
+        return AppColors.accent;
+      case NotificationType.system:
+        return AppColors.info;
     }
   }
 }

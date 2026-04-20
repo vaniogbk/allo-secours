@@ -18,82 +18,84 @@ class AppTheme {
         surface: AppColors.surface,
       ),
       scaffoldBackgroundColor: AppColors.background,
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(
-          fontSize: AppDimensions.fontHero,
+
+      textTheme: GoogleFonts.dmSansTextTheme().copyWith(
+        displayLarge: GoogleFonts.dmSans(
+          fontSize: 36,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           letterSpacing: -0.5,
         ),
-        displayMedium: GoogleFonts.inter(
-          fontSize: AppDimensions.fontTitle,
+        displayMedium: GoogleFonts.dmSans(
+          fontSize: 28,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           letterSpacing: -0.3,
         ),
-        headlineLarge: GoogleFonts.inter(
-          fontSize: AppDimensions.fontXXL,
+        headlineLarge: GoogleFonts.dmSans(
+          fontSize: 22,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        headlineMedium: GoogleFonts.inter(
-          fontSize: AppDimensions.fontXL,
+        headlineMedium: GoogleFonts.dmSans(
+          fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        headlineSmall: GoogleFonts.inter(
-          fontSize: AppDimensions.fontL,
+        headlineSmall: GoogleFonts.dmSans(
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        titleLarge: GoogleFonts.inter(
-          fontSize: AppDimensions.fontL,
+        titleLarge: GoogleFonts.dmSans(
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        titleMedium: GoogleFonts.inter(
-          fontSize: AppDimensions.fontM,
+        titleMedium: GoogleFonts.dmSans(
+          fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
         ),
-        titleSmall: GoogleFonts.inter(
-          fontSize: AppDimensions.fontS,
+        titleSmall: GoogleFonts.dmSans(
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary,
         ),
-        bodyLarge: GoogleFonts.inter(
-          fontSize: AppDimensions.fontL,
+        bodyLarge: GoogleFonts.dmSans(
+          fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
         ),
-        bodyMedium: GoogleFonts.inter(
-          fontSize: AppDimensions.fontM,
+        bodyMedium: GoogleFonts.dmSans(
+          fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
         ),
-        bodySmall: GoogleFonts.inter(
-          fontSize: AppDimensions.fontS,
+        bodySmall: GoogleFonts.dmSans(
+          fontSize: 12,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
-        labelLarge: GoogleFonts.inter(
-          fontSize: AppDimensions.fontM,
+        labelLarge: GoogleFonts.dmSans(
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.white,
           letterSpacing: 0.2,
         ),
-        labelMedium: GoogleFonts.inter(
-          fontSize: AppDimensions.fontS,
+        labelMedium: GoogleFonts.dmSans(
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary,
         ),
-        labelSmall: GoogleFonts.inter(
-          fontSize: AppDimensions.fontXS,
+        labelSmall: GoogleFonts.dmSans(
+          fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary,
           letterSpacing: 0.5,
         ),
       ),
+
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -104,12 +106,13 @@ class AppTheme {
           color: AppColors.textPrimary,
           size: AppDimensions.iconM,
         ),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: TextStyle(
           fontSize: AppDimensions.fontXL,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
       ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -118,40 +121,41 @@ class AppTheme {
           shadowColor: Colors.transparent,
           minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusM),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           ),
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.dmSans(
             fontSize: AppDimensions.fontL,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.primary, width: 1.5),
           minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusM),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           ),
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.dmSans(
             fontSize: AppDimensions.fontL,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.dmSans(
             fontSize: AppDimensions.fontM,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.background,
@@ -180,21 +184,23 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        hintStyle: GoogleFonts.inter(
+        hintStyle: TextStyle(
           fontSize: AppDimensions.fontM,
           color: AppColors.textHint,
         ),
-        labelStyle: GoogleFonts.inter(
+        labelStyle: TextStyle(
           fontSize: AppDimensions.fontM,
           color: AppColors.textSecondary,
         ),
-        errorStyle: GoogleFonts.inter(
+        errorStyle: TextStyle(
           fontSize: AppDimensions.fontS,
           color: AppColors.error,
         ),
         prefixIconColor: AppColors.textSecondary,
         suffixIconColor: AppColors.textSecondary,
       ),
+
+      // ✅ CORRIGÉ
       cardTheme: CardThemeData(
         color: AppColors.cardBg,
         elevation: AppDimensions.cardElevation,
@@ -204,10 +210,11 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
+
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.background,
         selectedColor: AppColors.primaryLight,
-        labelStyle: GoogleFonts.inter(
+        labelStyle: TextStyle(
           fontSize: AppDimensions.fontS,
           fontWeight: FontWeight.w500,
         ),
@@ -220,11 +227,13 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border),
         ),
       ),
+
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
-        thickness: AppDimensions.dividerHeight,
+        thickness: 1.0,
         space: 0,
       ),
+
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primary,
@@ -232,9 +241,10 @@ class AppTheme {
         elevation: 8,
         type: BottomNavigationBarType.fixed,
       ),
+
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.textPrimary,
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: TextStyle(
           fontSize: AppDimensions.fontM,
           color: AppColors.white,
         ),
@@ -243,26 +253,29 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         ),
       ),
+
+      // ✅ CORRIGÉ
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.white,
         elevation: 8,
-        shadowColor: AppColors.shadowMedium,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
         ),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: TextStyle(
           fontSize: AppDimensions.fontXL,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: TextStyle(
           fontSize: AppDimensions.fontM,
           color: AppColors.textSecondary,
         ),
       ),
+
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.primary,
       ),
+
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
@@ -271,6 +284,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         ),
       ),
+
       listTileTheme: const ListTileThemeData(
         contentPadding: EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingM,
@@ -278,6 +292,7 @@ class AppTheme {
         ),
         iconColor: AppColors.textSecondary,
       ),
+
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {

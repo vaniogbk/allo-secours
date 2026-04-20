@@ -37,10 +37,13 @@ class _ForgotPasswordScreenState
           .read(authServiceProvider)
           .sendPasswordReset(_emailCtrl.text.trim());
       if (mounted) setState(() => _sent = true);
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur. Vérifiez votre adresse email')),
+        const SnackBar(
+          content: Text('Erreur. Vérifiez votre adresse email'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -50,10 +53,22 @@ class _ForgotPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        leading: GestureDetector(
+          onTap: () => context.go('/auth/login'),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Icon(Icons.arrow_back_ios_rounded,
+                size: 18, color: AppColors.textPrimary),
+          ),
         ),
         title: const Text('Mot de passe oublié'),
       ),
@@ -73,8 +88,8 @@ class _ForgotPasswordScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(18),
+            decoration: const BoxDecoration(
               color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
@@ -82,15 +97,23 @@ class _ForgotPasswordScreenState
                 size: 40, color: AppColors.primary),
           ),
           const SizedBox(height: 24),
-          const Text('Réinitialiser votre mot de passe',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 8),
           const Text(
-              'Entrez votre email, nous vous enverrons un lien de réinitialisation.',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+            'Réinitialiser votre\nmot de passe',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Entrez votre email et nous vous enverrons un lien de réinitialisation.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
           const SizedBox(height: 32),
           CustomTextField(
             label: 'Adresse email',
@@ -100,7 +123,7 @@ class _ForgotPasswordScreenState
             prefixIcon: Icons.email_outlined,
             validator: Validators.email,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           CustomButton(
             label: 'Envoyer le lien',
             onPressed: _send,
@@ -117,27 +140,34 @@ class _ForgotPasswordScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
               color: AppColors.successLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_circle_rounded,
+            child: const Icon(Icons.mark_email_read_rounded,
                 size: 56, color: AppColors.success),
           ),
           const SizedBox(height: 24),
-          const Text('Email envoyé !',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 8),
+          const Text(
+            'Email envoyé !',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
-              'Un lien de réinitialisation a été envoyé à ${_emailCtrl.text}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 14, color: AppColors.textSecondary)),
-          const SizedBox(height: 32),
+            'Un lien de réinitialisation a été envoyé à\n${_emailCtrl.text}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 36),
           CustomButton(
             label: 'Retour à la connexion',
             onPressed: () => context.go('/auth/login'),

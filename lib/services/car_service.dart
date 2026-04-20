@@ -5,11 +5,18 @@ class CarService {
   final _db = FirebaseFirestore.instance;
   CollectionReference get _col => _db.collection('cars');
 
+  // Sans orderBy sur isAvailable pour éviter l'index composite
   Stream<List<CarModel>> getCars({bool? availableOnly}) {
-    Query q = _col.orderBy('createdAt', descending: true);
-    if (availableOnly == true) q = q.where('isAvailable', isEqualTo: true);
-    return q.snapshots().map((s) =>
-        s.docs.map((d) => CarModel.fromDoc(d)).toList());
+    return _col
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) {
+      final all = s.docs.map((d) => CarModel.fromDoc(d)).toList();
+      if (availableOnly == true) {
+        return all.where((c) => c.isAvailable).toList();
+      }
+      return all;
+    });
   }
 
   Future<CarModel> getCar(String id) async {
@@ -33,8 +40,10 @@ class CarService {
   Future<void> setAvailability(String id, bool available) =>
       _col.doc(id).update({'isAvailable': available});
 
+  // Recherche côté client pour éviter les index complexes
   Future<List<CarModel>> searchCars(String query) async {
-    final snap = await _col.get();
+    final snap =
+        await _col.orderBy('createdAt', descending: true).get();
     final q = query.toLowerCase();
     return snap.docs
         .map((d) => CarModel.fromDoc(d))

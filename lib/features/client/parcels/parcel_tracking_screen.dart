@@ -18,7 +18,6 @@ class ParcelTrackingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final parcelAsync = ref.watch(parcelStreamProvider(parcelId));
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -29,9 +28,15 @@ class ParcelTrackingScreen extends ConsumerWidget {
         ),
       ),
       body: parcelAsync.when(
-        data: (parcel) => _buildBody(context, parcel),
+        data: (parcel) {
+          if (parcel == null) {
+            return const Center(child: Text('Accès non autorisé ou colis introuvable'));
+          }
+          return _buildBody(context, parcel);
+        },
         loading: () => const LoadingWidget(),
-        error: (e, _) => Center(child: Text('Erreur: $e')),
+        error: (e, _) =>
+            Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -42,14 +47,16 @@ class ParcelTrackingScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Statut principal
+          // Status hero
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
                   AppColors.getStatusColor(parcel.status.name),
-                  AppColors.getStatusColor(parcel.status.name).withOpacity(0.7)
+                  AppColors.getStatusColor(parcel.status.name)
+                      .withOpacity(0.7),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -72,18 +79,21 @@ class ParcelTrackingScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(parcel.statusLabel,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 4),
+                      Text(
+                        parcel.statusLabel,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700),
+                      ),
                       if (parcel.estimatedDelivery != null)
                         Text(
-                            'Livraison estimée: ${AppDateUtils.formatDate(parcel.estimatedDelivery!)}',
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 12)),
+                          'Livraison estimée: ${AppDateUtils.formatDate(parcel.estimatedDelivery!)}',
+                          style: TextStyle(
+                              color:
+                                  Colors.white.withOpacity(0.85),
+                              fontSize: 12),
+                        ),
                     ],
                   ),
                 ),
@@ -92,7 +102,7 @@ class ParcelTrackingScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Code de tracking + QR
+          // Tracking code + QR
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -105,19 +115,22 @@ class ParcelTrackingScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
                         children: [
                           const Text('Code de suivi',
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary)),
+                                  color:
+                                      AppColors.textSecondary)),
                           const SizedBox(height: 4),
-                          Text(parcel.trackingCode,
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1,
-                                  fontFamily: 'monospace')),
+                          Text(
+                            parcel.trackingCode,
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1),
+                          ),
                         ],
                       ),
                     ),
@@ -125,10 +138,12 @@ class ParcelTrackingScreen extends ConsumerWidget {
                       icon: const Icon(Icons.copy_rounded,
                           color: AppColors.primary),
                       onPressed: () {
-                        Clipboard.setData(
-                            ClipboardData(text: parcel.trackingCode));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Code copié')),
+                        Clipboard.setData(ClipboardData(
+                            text: parcel.trackingCode));
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(
+                          const SnackBar(
+                              content: Text('Code copié')),
                         );
                       },
                     ),
@@ -146,7 +161,7 @@ class ParcelTrackingScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Infos expéditeur / destinataire
+          // Route
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -156,9 +171,10 @@ class ParcelTrackingScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Détails du transport',
+                const Text('Trajet',
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700)),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700)),
                 const SizedBox(height: 14),
                 _RouteRow(
                   icon: Icons.radio_button_on_rounded,
@@ -178,14 +194,15 @@ class ParcelTrackingScreen extends ConsumerWidget {
                   color: AppColors.error,
                   label: 'Destination',
                   value: parcel.recipientAddress,
-                  sub: '${parcel.recipientName} — ${parcel.recipientPhone}',
+                  sub:
+                      '${parcel.recipientName} — ${parcel.recipientPhone}',
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
-          // Infos colis
+          // Infos
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -195,15 +212,17 @@ class ParcelTrackingScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Informations du colis',
+                const Text('Détails du colis',
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700)),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700)),
                 const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
                         child: _InfoTile(
-                            label: 'Type', value: parcel.typeLabel)),
+                            label: 'Type',
+                            value: parcel.typeLabel)),
                     Expanded(
                         child: _InfoTile(
                             label: 'Poids',
@@ -211,16 +230,19 @@ class ParcelTrackingScreen extends ConsumerWidget {
                     Expanded(
                         child: _InfoTile(
                             label: 'Tarif',
-                            value: FormatUtils.formatPrice(parcel.price))),
+                            value: FormatUtils.formatPrice(
+                                parcel.price))),
                   ],
                 ),
-                if (parcel.note != null && parcel.note!.isNotEmpty) ...[
+                if (parcel.note != null &&
+                    parcel.note!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   const Divider(),
                   const SizedBox(height: 8),
                   Text('Note: ${parcel.note}',
                       style: const TextStyle(
-                          fontSize: 13, color: AppColors.textSecondary)),
+                          fontSize: 13,
+                          color: AppColors.textSecondary)),
                 ],
               ],
             ),
@@ -241,7 +263,8 @@ class ParcelTrackingScreen extends ConsumerWidget {
             child: parcel.statusHistory.isEmpty
                 ? const Center(
                     child: Text('Aucun historique',
-                        style: TextStyle(color: AppColors.textSecondary)))
+                        style: TextStyle(
+                            color: AppColors.textSecondary)))
                 : Column(
                     children: parcel.statusHistory.reversed
                         .toList()
@@ -265,7 +288,8 @@ class ParcelTrackingScreen extends ConsumerWidget {
     switch (s) {
       case ParcelStatus.pending: return Icons.schedule_rounded;
       case ParcelStatus.pickedUp: return Icons.inventory_rounded;
-      case ParcelStatus.inTransit: return Icons.local_shipping_rounded;
+      case ParcelStatus.inTransit:
+        return Icons.local_shipping_rounded;
       case ParcelStatus.delivered: return Icons.done_all_rounded;
       case ParcelStatus.cancelled: return Icons.cancel_rounded;
     }
@@ -278,14 +302,12 @@ class _RouteRow extends StatelessWidget {
   final String label;
   final String value;
   final String sub;
-
-  const _RouteRow({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.value,
-    required this.sub,
-  });
+  const _RouteRow(
+      {required this.icon,
+      required this.color,
+      required this.label,
+      required this.value,
+      required this.sub});
 
   @override
   Widget build(BuildContext context) {
@@ -300,13 +322,16 @@ class _RouteRow extends StatelessWidget {
             children: [
               Text(label,
                   style: const TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary)),
+                      fontSize: 11,
+                      color: AppColors.textSecondary)),
               Text(value,
                   style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
               Text(sub,
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary)),
+                      fontSize: 12,
+                      color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -339,7 +364,8 @@ class _InfoTile extends StatelessWidget {
 class _TimelineItem extends StatelessWidget {
   final ParcelStatusHistory item;
   final bool isLast;
-  const _TimelineItem({required this.item, required this.isLast});
+  const _TimelineItem(
+      {required this.item, required this.isLast});
 
   @override
   Widget build(BuildContext context) {
@@ -354,12 +380,14 @@ class _TimelineItem extends StatelessWidget {
                 height: 12,
                 margin: const EdgeInsets.only(top: 4),
                 decoration: const BoxDecoration(
-                    color: AppColors.primary, shape: BoxShape.circle),
+                    color: AppColors.primary,
+                    shape: BoxShape.circle),
               ),
               if (!isLast)
                 Expanded(
                     child: Container(
-                        width: 2, color: AppColors.border)),
+                        width: 2,
+                        color: AppColors.border)),
             ],
           ),
           const SizedBox(width: 12),
@@ -371,15 +399,16 @@ class _TimelineItem extends StatelessWidget {
                 children: [
                   Text(item.label,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 2),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13)),
                   if (item.note != null)
                     Text(item.note!,
                         style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary)),
-                  const SizedBox(height: 4),
-                  Text(AppDateUtils.formatDateTime(item.date),
+                  const SizedBox(height: 2),
+                  Text(
+                      AppDateUtils.formatDateTime(item.date),
                       style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary)),

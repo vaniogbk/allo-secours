@@ -121,12 +121,15 @@ class ParcelModel {
       trackingCode: map['trackingCode'] ?? '',
       status: ParcelStatusHistory._parseStatus(map['status']),
       statusHistory: (map['statusHistory'] as List<dynamic>? ?? [])
-          .map((e) => ParcelStatusHistory.fromMap(e as Map<String, dynamic>))
+          .map((e) =>
+              ParcelStatusHistory.fromMap(e as Map<String, dynamic>))
           .toList(),
       note: map['note'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt:
+          (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
-      estimatedDelivery: (map['estimatedDelivery'] as Timestamp?)?.toDate(),
+      estimatedDelivery:
+          (map['estimatedDelivery'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -158,7 +161,8 @@ class ParcelModel {
         'statusHistory': statusHistory.map((e) => e.toMap()).toList(),
         'note': note,
         'createdAt': Timestamp.fromDate(createdAt),
-        'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+        'updatedAt':
+            updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
         'estimatedDelivery': estimatedDelivery != null
             ? Timestamp.fromDate(estimatedDelivery!)
             : null,
@@ -170,15 +174,23 @@ class ParcelModel {
     DateTime? updatedAt,
   }) {
     return ParcelModel(
-      id: id, senderId: senderId, senderName: senderName,
-      senderAddress: senderAddress, senderPhone: senderPhone,
-      recipientName: recipientName, recipientPhone: recipientPhone,
-      recipientAddress: recipientAddress, weight: weight,
-      dimensions: dimensions, type: type, price: price,
+      id: id,
+      senderId: senderId,
+      senderName: senderName,
+      senderAddress: senderAddress,
+      senderPhone: senderPhone,
+      recipientName: recipientName,
+      recipientPhone: recipientPhone,
+      recipientAddress: recipientAddress,
+      weight: weight,
+      dimensions: dimensions,
+      type: type,
+      price: price,
       trackingCode: trackingCode,
       status: status ?? this.status,
       statusHistory: statusHistory ?? this.statusHistory,
-      note: note, createdAt: createdAt,
+      note: note,
+      createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       estimatedDelivery: estimatedDelivery,
     );

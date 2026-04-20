@@ -29,7 +29,9 @@ class UserModel {
 
   String get initials {
     final parts = fullName.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
     return fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
   }
 
@@ -42,7 +44,8 @@ class UserModel {
       photoUrl: map['photoUrl'],
       role: map['role'] == 'admin' ? UserRole.admin : UserRole.client,
       isBlocked: map['isBlocked'] ?? false,
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt:
+          (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -58,7 +61,8 @@ class UserModel {
         'role': role.name,
         'isBlocked': isBlocked,
         'createdAt': Timestamp.fromDate(createdAt),
-        'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+        'updatedAt':
+            updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       };
 
   UserModel copyWith({

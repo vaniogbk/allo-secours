@@ -3,20 +3,24 @@ class Validators {
 
   static String? required(String? value, [String? fieldName]) {
     if (value == null || value.trim().isEmpty) {
-      return fieldName != null ? '$fieldName est obligatoire' : 'Ce champ est obligatoire';
+      return fieldName != null
+          ? '$fieldName est obligatoire'
+          : 'Ce champ est obligatoire';
     }
     return null;
   }
 
   static String? email(String? value) {
-    if (value == null || value.trim().isEmpty) return 'L\'email est obligatoire';
-    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    if (!regex.hasMatch(value.trim())) return 'Adresse email invalide';
+    if (value == null || value.trim().isEmpty) {
+      return 'L\'email est obligatoire';
+    }
+    final regex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!regex.hasMatch(value.trim())) return 'Email invalide';
     return null;
   }
 
   static String? password(String? value) {
-    if (value == null || value.isEmpty) return 'Le mot de passe est obligatoire';
+    if (value == null || value.isEmpty) return 'Mot de passe obligatoire';
     if (value.length < 6) return 'Minimum 6 caractères';
     return null;
   }
@@ -28,9 +32,11 @@ class Validators {
   }
 
   static String? phone(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Le téléphone est obligatoire';
+    if (value == null || value.trim().isEmpty) {
+      return 'Le téléphone est obligatoire';
+    }
     final cleaned = value.replaceAll(RegExp(r'\D'), '');
-    if (cleaned.length < 8) return 'Numéro de téléphone invalide';
+    if (cleaned.length < 8) return 'Numéro invalide';
     return null;
   }
 
@@ -39,16 +45,8 @@ class Validators {
       return '${fieldName ?? 'Ce champ'} est obligatoire';
     }
     final number = double.tryParse(value.replaceAll(',', '.'));
-    if (number == null) return 'Valeur numérique invalide';
-    if (number <= 0) return 'La valeur doit être supérieure à 0';
-    return null;
-  }
-
-  static String? combine(String? value, List<String? Function(String?)> validators) {
-    for (final v in validators) {
-      final result = v(value);
-      if (result != null) return result;
-    }
+    if (number == null) return 'Valeur invalide';
+    if (number <= 0) return 'Doit être supérieur à 0';
     return null;
   }
 }

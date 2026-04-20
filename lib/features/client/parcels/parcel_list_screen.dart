@@ -9,29 +9,17 @@ import '../../../core/widgets/empty_state_widget.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/parcel_model.dart';
 import '../../../providers/parcel_provider.dart';
-
-class ParcelListScreen extends ConsumerWidget {
+class ParcelListScreen extends ConsumerStatefulWidget {
   const ParcelListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const ParcelListScreenEmbedded();
-  }
+  ConsumerState<ParcelListScreen> createState() =>
+      _ParcelListScreenState();
 }
 
-class ParcelListScreenEmbedded extends ConsumerStatefulWidget {
-  const ParcelListScreenEmbedded({super.key});
-
-  @override
-  ConsumerState<ParcelListScreenEmbedded> createState() =>
-      _ParcelListScreenEmbeddedState();
-}
-
-class _ParcelListScreenEmbeddedState
-    extends ConsumerState<ParcelListScreenEmbedded>
+class _ParcelListScreenState extends ConsumerState<ParcelListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
-  final _trackingCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -42,7 +30,6 @@ class _ParcelListScreenEmbeddedState
   @override
   void dispose() {
     _tabCtrl.dispose();
-    _trackingCtrl.dispose();
     super.dispose();
   }
 
@@ -66,8 +53,10 @@ class _ParcelListScreenEmbeddedState
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/client/parcels/create'),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Envoyer'),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text('Envoyer',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: TabBarView(
         controller: _tabCtrl,
@@ -84,7 +73,6 @@ class _MyParcelsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final parcelsAsync = ref.watch(myParcelsProvider);
-
     return parcelsAsync.when(
       data: (parcels) {
         if (parcels.isEmpty) {
@@ -103,15 +91,19 @@ class _MyParcelsTab extends ConsumerWidget {
           itemBuilder: (_, i) => _ParcelCard(parcel: parcels[i]),
         );
       },
-      loading: () => const ShimmerList(count: 4, itemHeight: 100),
-      error: (e, _) => Center(child: Text('Erreur: $e')),
+      loading: () => const ShimmerList(count: 4, itemHeight: 110),
+      error: (e, _) => Center(
+        child: Text('Erreur: $e',
+            style: const TextStyle(color: AppColors.error)),
+      ),
     );
   }
 }
 
 class _TrackParcelTab extends ConsumerStatefulWidget {
   @override
-  ConsumerState<_TrackParcelTab> createState() => _TrackParcelTabState();
+  ConsumerState<_TrackParcelTab> createState() =>
+      _TrackParcelTabState();
 }
 
 class _TrackParcelTabState extends ConsumerState<_TrackParcelTab> {
@@ -136,12 +128,15 @@ class _TrackParcelTabState extends ConsumerState<_TrackParcelTab> {
     try {
       final parcel = await ref
           .read(parcelServiceProvider)
-          .getParcelByTracking(_ctrl.text.trim().toUpperCase());
+          .getParcelByTracking(
+              _ctrl.text.trim().toUpperCase());
       setState(() {
         _found = parcel;
-        _error = parcel == null ? 'Aucun colis trouvé avec ce code' : null;
+        _error = parcel == null
+            ? 'Aucun colis trouvé avec ce code'
+            : null;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() => _error = 'Erreur de recherche');
     } finally {
       setState(() => _loading = false);
@@ -163,7 +158,8 @@ class _TrackParcelTabState extends ConsumerState<_TrackParcelTab> {
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     hintText: 'Ex: LGT2024XXXXXX',
-                    prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
+                    prefixIcon: const Icon(Icons.search_rounded,
+                        color: AppColors.textSecondary),
                     fillColor: Colors.white,
                     filled: true,
                     border: OutlineInputBorder(
@@ -187,7 +183,8 @@ class _TrackParcelTabState extends ConsumerState<_TrackParcelTab> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2,
+                            color: Colors.white))
                     : const Icon(Icons.search_rounded),
               ),
             ],
@@ -195,7 +192,7 @@ class _TrackParcelTabState extends ConsumerState<_TrackParcelTab> {
           const SizedBox(height: 20),
           if (_error != null)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.errorLight,
                 borderRadius: BorderRadius.circular(12),
@@ -206,16 +203,19 @@ class _TrackParcelTabState extends ConsumerState<_TrackParcelTab> {
                       color: AppColors.error, size: 20),
                   const SizedBox(width: 10),
                   Text(_error!,
-                      style: const TextStyle(color: AppColors.error)),
+                      style:
+                          const TextStyle(color: AppColors.error)),
                 ],
               ),
             ),
-          if (_found != null)
+          if (_found != null) ...[
+            const SizedBox(height: 12),
             GestureDetector(
-              onTap: () =>
-                  context.push('/client/parcels/${_found!.id}/track'),
+              onTap: () => context
+                  .push('/client/parcels/${_found!.id}/track'),
               child: _ParcelCard(parcel: _found!),
             ),
+          ],
         ],
       ),
     );
@@ -229,7 +229,8 @@ class _ParcelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/client/parcels/${parcel.id}/track'),
+      onTap: () =>
+          context.push('/client/parcels/${parcel.id}/track'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -246,13 +247,15 @@ class _ParcelCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.getStatusBgColor(parcel.status.name),
+                    color: AppColors.getStatusBgColor(
+                        parcel.status.name),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     _statusIcon(parcel.status),
                     size: 22,
-                    color: AppColors.getStatusColor(parcel.status.name),
+                    color: AppColors.getStatusColor(
+                        parcel.status.name),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -260,15 +263,20 @@ class _ParcelCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Vers ${parcel.recipientName}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 14)),
+                      Text(
+                        'Vers ${parcel.recipientName}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14),
+                      ),
                       const SizedBox(height: 2),
-                      Text(parcel.trackingCode,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                              fontFamily: 'monospace')),
+                      Text(
+                        parcel.trackingCode,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            fontFamily: 'monospace'),
+                      ),
                     ],
                   ),
                 ),
@@ -279,21 +287,26 @@ class _ParcelCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.getStatusBgColor(parcel.status.name),
+                        color: AppColors.getStatusBgColor(
+                            parcel.status.name),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(parcel.statusLabel,
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.getStatusColor(
-                                  parcel.status.name))),
+                      child: Text(
+                        parcel.statusLabel,
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.getStatusColor(
+                                parcel.status.name)),
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text(AppDateUtils.timeAgo(parcel.createdAt),
-                        style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary)),
+                    Text(
+                      AppDateUtils.timeAgo(parcel.createdAt),
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary),
+                    ),
                   ],
                 ),
               ],
@@ -303,18 +316,21 @@ class _ParcelCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                _InfoChip(
+                _Chip(
                     icon: Icons.scale_outlined,
                     label: '${parcel.weight} kg'),
-                const SizedBox(width: 8),
-                _InfoChip(icon: Icons.local_shipping_outlined,
+                const SizedBox(width: 10),
+                _Chip(
+                    icon: Icons.local_shipping_outlined,
                     label: parcel.typeLabel),
                 const Spacer(),
-                Text(FormatUtils.formatPrice(parcel.price),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        fontSize: 14)),
+                Text(
+                  FormatUtils.formatPrice(parcel.price),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                      fontSize: 14),
+                ),
               ],
             ),
           ],
@@ -325,19 +341,24 @@ class _ParcelCard extends StatelessWidget {
 
   IconData _statusIcon(ParcelStatus s) {
     switch (s) {
-      case ParcelStatus.pending: return Icons.schedule_rounded;
-      case ParcelStatus.pickedUp: return Icons.check_circle_outline_rounded;
-      case ParcelStatus.inTransit: return Icons.local_shipping_rounded;
-      case ParcelStatus.delivered: return Icons.done_all_rounded;
-      case ParcelStatus.cancelled: return Icons.cancel_outlined;
+      case ParcelStatus.pending:
+        return Icons.schedule_rounded;
+      case ParcelStatus.pickedUp:
+        return Icons.inventory_rounded;
+      case ParcelStatus.inTransit:
+        return Icons.local_shipping_rounded;
+      case ParcelStatus.delivered:
+        return Icons.done_all_rounded;
+      case ParcelStatus.cancelled:
+        return Icons.cancel_outlined;
     }
   }
 }
 
-class _InfoChip extends StatelessWidget {
+class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _InfoChip({required this.icon, required this.label});
+  const _Chip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

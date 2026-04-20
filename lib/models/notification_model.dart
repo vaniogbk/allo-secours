@@ -32,12 +32,14 @@ class NotificationModel {
       type: _parseType(map['type']),
       refId: map['refId'],
       isRead: map['isRead'] ?? false,
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt:
+          (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   factory NotificationModel.fromDoc(DocumentSnapshot doc) =>
-      NotificationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      NotificationModel.fromMap(
+          doc.data() as Map<String, dynamic>, doc.id);
 
   static NotificationType _parseType(String? v) {
     switch (v) {

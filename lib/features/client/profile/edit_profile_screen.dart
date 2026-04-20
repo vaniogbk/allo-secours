@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
@@ -23,19 +23,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   bool _loading = false;
-  File? _newPhoto;
   bool _initialized = false;
+  XFile? _newPhoto;
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickPhoto() async {
-    final file = await StorageService().pickImage();
-    if (file != null) setState(() => _newPhoto = file);
   }
 
   Future<void> _save() async {
@@ -50,24 +45,39 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'phone': _phoneCtrl.text.trim(),
       };
 
+      // Upload photo vers Cloudinary si nouvelle photo sélectionnée
       if (_newPhoto != null) {
-        final url = await StorageService()
-            .uploadFile(_newPhoto!, 'avatars/${user.uid}');
-        data['photoUrl'] = url;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Upload de la photo en cours...'),
+            duration: Duration(seconds: 10),
+          ),
+        );
+        final photoUrl =
+            await StorageService().uploadFile(_newPhoto!, 'avatars');
+        data['photoUrl'] = photoUrl;
       }
 
       await ref.read(authServiceProvider).updateUser(user.uid, data);
 
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil mis à jour')),
+          const SnackBar(
+            content: Text('Profil mis à jour avec succès'),
+            backgroundColor: AppColors.success,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
+          SnackBar(
+            content: Text('Erreur: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -103,48 +113,43 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 16),
-                  // Photo
                   Center(
-                    child: GestureDetector(
-                      onTap: _pickPhoto,
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 52,
-                            backgroundColor: AppColors.primaryLight,
-                            backgroundImage: _newPhoto != null
-                                ? FileImage(_newPhoto!)
-                                : (user.photoUrl != null
-                                    ? NetworkImage(user.photoUrl!)
-                                        as ImageProvider
-                                    : null),
-                            child: _newPhoto == null && user.photoUrl == null
-                                ? Text(user.initials,
-                                    style: const TextStyle(
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.primary))
-                                : null,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.camera_alt_rounded,
-                                  size: 18, color: Colors.white),
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 52,
+                          backgroundColor: AppColors.primaryLight,
+                          backgroundImage: user.photoUrl != null
+                              ? NetworkImage(user.photoUrl!)
+                              : null,
+                          child: user.photoUrl == null
+                              ? Text(
+                                  user.initials,
+                                  style: const TextStyle(
+                                      fontSize: 34,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary),
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(Icons.camera_alt_rounded,
+                                size: 18, color: Colors.white),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Appuyez pour changer la photo',
+                  const Text('Photo de profil',
                       style: TextStyle(
                           fontSize: 12, color: AppColors.textSecondary)),
                   const SizedBox(height: 28),

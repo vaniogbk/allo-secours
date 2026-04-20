@@ -9,25 +9,16 @@ import '../../../core/widgets/loading_widget.dart';
 import '../../../models/reservation_model.dart';
 import '../../../providers/reservation_provider.dart';
 
-class MyReservationsScreen extends ConsumerWidget {
+class MyReservationsScreen extends ConsumerStatefulWidget {
   const MyReservationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const MyReservationsScreenEmbedded();
-  }
+  ConsumerState<MyReservationsScreen> createState() =>
+      _MyReservationsScreenState();
 }
 
-class MyReservationsScreenEmbedded extends ConsumerStatefulWidget {
-  const MyReservationsScreenEmbedded({super.key});
-
-  @override
-  ConsumerState<MyReservationsScreenEmbedded> createState() =>
-      _MyReservationsScreenEmbeddedState();
-}
-
-class _MyReservationsScreenEmbeddedState
-    extends ConsumerState<MyReservationsScreenEmbedded>
+class _MyReservationsScreenState
+    extends ConsumerState<MyReservationsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
@@ -57,25 +48,25 @@ class _MyReservationsScreenEmbeddedState
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
-          isScrollable: true,
           tabs: const [
+            Tab(text: 'En attente'),
             Tab(text: 'En cours'),
-            Tab(text: 'A venir'),
             Tab(text: 'Terminées'),
           ],
         ),
       ),
       body: resAsync.when(
-        data: (reservations) {
-          final active = reservations
+        data: (list) {
+          final pending = list
+              .where((r) =>
+                  r.status == ReservationStatus.pending)
+              .toList();
+          final active = list
               .where((r) =>
                   r.status == ReservationStatus.active ||
                   r.status == ReservationStatus.confirmed)
               .toList();
-          final upcoming = reservations
-              .where((r) => r.status == ReservationStatus.pending)
-              .toList();
-          final done = reservations
+          final done = list
               .where((r) =>
                   r.status == ReservationStatus.completed ||
                   r.status == ReservationStatus.cancelled)
@@ -84,22 +75,23 @@ class _MyReservationsScreenEmbeddedState
           return TabBarView(
             controller: _tabCtrl,
             children: [
-              _ReservationList(reservations: active),
-              _ReservationList(reservations: upcoming),
-              _ReservationList(reservations: done),
+              _ResList(reservations: pending),
+              _ResList(reservations: active),
+              _ResList(reservations: done),
             ],
           );
         },
-        loading: () => const ShimmerList(count: 3, itemHeight: 130),
+        loading: () =>
+            const ShimmerList(count: 3, itemHeight: 150),
         error: (e, _) => Center(child: Text('Erreur: $e')),
       ),
     );
   }
 }
 
-class _ReservationList extends StatelessWidget {
+class _ResList extends StatelessWidget {
   final List<ReservationModel> reservations;
-  const _ReservationList({required this.reservations});
+  const _ResList({required this.reservations});
 
   @override
   Widget build(BuildContext context) {
@@ -107,14 +99,15 @@ class _ReservationList extends StatelessWidget {
       return const EmptyStateWidget(
         icon: Icons.calendar_today_outlined,
         title: 'Aucune réservation',
-        subtitle: 'Vous n\'avez pas de réservation dans cette catégorie',
+        subtitle: 'Pas de réservation dans cette catégorie',
       );
     }
     return ListView.separated(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       itemCount: reservations.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, i) => _ReservationCard(res: reservations[i]),
+      itemBuilder: (_, i) =>
+          _ReservationCard(res: reservations[i]),
     );
   }
 }
@@ -135,18 +128,20 @@ class _ReservationCard extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          // Car image + status
           Stack(
             children: [
               ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16)),
                 child: res.carPhoto != null
-                    ? Image.network(res.carPhoto!,
-                        height: 120,
+                    ? Image.network(
+                        res.carPhoto!,
+                        height: 130,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholder())
+                        errorBuilder: (_, __, ___) =>
+                            _placeholder(),
+                      )
                     : _placeholder(),
               ),
               Positioned(
@@ -156,15 +151,18 @@ class _ReservationCard extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color:
-                        AppColors.getStatusBgColor(res.status.name),
+                    color: AppColors.getStatusBgColor(
+                        res.status.name),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(res.statusLabel,
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.getStatusColor(res.status.name))),
+                  child: Text(
+                    res.statusLabel,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.getStatusColor(
+                            res.status.name)),
+                  ),
                 ),
               ),
             ],
@@ -176,34 +174,44 @@ class _ReservationCard extends ConsumerWidget {
               children: [
                 Text(res.carFullName,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700)),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     const Icon(Icons.calendar_today_outlined,
-                        size: 14, color: AppColors.textSecondary),
+                        size: 14,
+                        color: AppColors.textSecondary),
                     const SizedBox(width: 6),
-                    Text(
-                        '${AppDateUtils.formatDate(res.startDate)} - ${AppDateUtils.formatDate(res.endDate)}',
+                    Expanded(
+                      child: Text(
+                        '${AppDateUtils.formatDate(res.startDate)} → ${AppDateUtils.formatDate(res.endDate)}',
                         style: const TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary)),
+                            fontSize: 13,
+                            color: AppColors.textSecondary),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     const Icon(Icons.access_time_outlined,
-                        size: 14, color: AppColors.textSecondary),
+                        size: 14,
+                        color: AppColors.textSecondary),
                     const SizedBox(width: 6),
                     Text('${res.totalDays} jour(s)',
                         style: const TextStyle(
-                            fontSize: 13, color: AppColors.textSecondary)),
+                            fontSize: 13,
+                            color: AppColors.textSecondary)),
                     const Spacer(),
-                    Text(FormatUtils.formatPrice(res.totalPrice),
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary)),
+                    Text(
+                      FormatUtils.formatPrice(res.totalPrice),
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary),
+                    ),
                   ],
                 ),
                 if (res.status == ReservationStatus.pending) ...[
@@ -213,15 +221,20 @@ class _ReservationCard extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () => _cancelDialog(context, ref),
+                      onPressed: () =>
+                          _cancelDialog(context, ref),
                       icon: const Icon(Icons.cancel_outlined,
                           size: 16, color: AppColors.error),
-                      label: const Text('Annuler la réservation',
-                          style: TextStyle(color: AppColors.error)),
+                      label: const Text(
+                          'Annuler la réservation',
+                          style: TextStyle(
+                              color: AppColors.error)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.error),
+                        side: const BorderSide(
+                            color: AppColors.error),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius:
+                                BorderRadius.circular(10)),
                       ),
                     ),
                   ),
@@ -234,23 +247,24 @@ class _ReservationCard extends ConsumerWidget {
     );
   }
 
-  Widget _placeholder() {
-    return Container(
-      height: 120,
-      color: AppColors.primaryLight,
-      child: const Center(
+  Widget _placeholder() => Container(
+        height: 130,
+        color: AppColors.primaryLight,
+        child: const Center(
           child: Icon(Icons.directions_car_rounded,
-              size: 48, color: AppColors.primary)),
-    );
-  }
+              size: 48, color: AppColors.primary),
+        ),
+      );
 
   void _cancelDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: const Text('Annuler la réservation ?'),
         content: const Text(
-            'Cette action est irréversible. Confirmez-vous l\'annulation ?'),
+            'Cette action est irréversible. Confirmez-vous ?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
@@ -258,9 +272,13 @@ class _ReservationCard extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await ref.read(reservationServiceProvider).updateStatus(
-                  res.id, ReservationStatus.cancelled,
-                  reason: 'Annulé par le client');
+              await ref
+                  .read(reservationServiceProvider)
+                  .updateStatus(
+                    res.id,
+                    ReservationStatus.cancelled,
+                    reason: 'Annulé par le client',
+                  );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

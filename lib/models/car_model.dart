@@ -61,8 +61,8 @@ class CarModel {
       id: id,
       brand: map['brand'] ?? '',
       model: map['model'] ?? '',
-      year: map['year'] ?? DateTime.now().year,
-      seats: map['seats'] ?? 5,
+      year: (map['year'] ?? DateTime.now().year) as int,
+      seats: (map['seats'] ?? 5) as int,
       transmission: map['transmission'] == 'manual'
           ? Transmission.manual
           : Transmission.automatic,
@@ -73,9 +73,10 @@ class CarModel {
       description: map['description'] ?? '',
       isAvailable: map['isAvailable'] ?? true,
       rating: map['rating']?.toDouble(),
-      reviewCount: map['reviewCount'] ?? 0,
+      reviewCount: (map['reviewCount'] ?? 0) as int,
       features: List<String>.from(map['features'] ?? []),
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt:
+          (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -121,8 +122,6 @@ class CarModel {
     List<String>? photos,
     String? description,
     bool? isAvailable,
-    double? rating,
-    int? reviewCount,
     List<String>? features,
   }) {
     return CarModel(
@@ -138,8 +137,8 @@ class CarModel {
       photos: photos ?? this.photos,
       description: description ?? this.description,
       isAvailable: isAvailable ?? this.isAvailable,
-      rating: rating ?? this.rating,
-      reviewCount: reviewCount ?? this.reviewCount,
+      rating: rating,
+      reviewCount: reviewCount,
       features: features ?? this.features,
       createdAt: createdAt,
     );

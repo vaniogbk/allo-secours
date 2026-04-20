@@ -9,27 +9,16 @@ import '../../../core/widgets/loading_widget.dart';
 import '../../../models/car_model.dart';
 import '../../../providers/car_provider.dart';
 
-class CarListScreen extends ConsumerWidget {
+class CarListScreen extends ConsumerStatefulWidget {
   const CarListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const CarListScreenEmbedded();
-  }
+  ConsumerState<CarListScreen> createState() => _CarListScreenState();
 }
 
-class CarListScreenEmbedded extends ConsumerStatefulWidget {
-  const CarListScreenEmbedded({super.key});
-
-  @override
-  ConsumerState<CarListScreenEmbedded> createState() =>
-      _CarListScreenEmbeddedState();
-}
-
-class _CarListScreenEmbeddedState
-    extends ConsumerState<CarListScreenEmbedded> {
+class _CarListScreenState extends ConsumerState<CarListScreen> {
   String _search = '';
-  String _filter = 'all';
+  String _filterTransmission = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -38,17 +27,20 @@ class _CarListScreenEmbeddedState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Voitures disponibles'),
         automaticallyImplyLeading: false,
+        title: const Text('Voitures disponibles'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.tune_rounded),
-            onSelected: (v) => setState(() => _filter = v),
+            onSelected: (v) =>
+                setState(() => _filterTransmission = v),
             itemBuilder: (_) => [
-              const PopupMenuItem(value: 'all', child: Text('Toutes')),
+              const PopupMenuItem(
+                  value: 'all', child: Text('Toutes')),
               const PopupMenuItem(
                   value: 'automatic', child: Text('Automatique')),
-              const PopupMenuItem(value: 'manual', child: Text('Manuelle')),
+              const PopupMenuItem(
+                  value: 'manual', child: Text('Manuelle')),
             ],
           ),
         ],
@@ -64,7 +56,8 @@ class _CarListScreenEmbeddedState
                     size: 20, color: AppColors.textSecondary),
                 fillColor: Colors.white,
                 filled: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -85,11 +78,11 @@ class _CarListScreenEmbeddedState
                     c.model.toLowerCase().contains(q))
                 .toList();
           }
-          if (_filter == 'automatic') {
+          if (_filterTransmission == 'automatic') {
             filtered = filtered
                 .where((c) => c.transmission == Transmission.automatic)
                 .toList();
-          } else if (_filter == 'manual') {
+          } else if (_filterTransmission == 'manual') {
             filtered = filtered
                 .where((c) => c.transmission == Transmission.manual)
                 .toList();
@@ -110,8 +103,11 @@ class _CarListScreenEmbeddedState
             itemBuilder: (_, i) => _CarCard(car: filtered[i]),
           );
         },
-        loading: () => const ShimmerList(count: 5, itemHeight: 140),
-        error: (e, _) => Center(child: Text('Erreur: $e')),
+        loading: () => const ShimmerList(count: 5, itemHeight: 180),
+        error: (e, _) => Center(
+          child: Text('Erreur: $e',
+              style: const TextStyle(color: AppColors.error)),
+        ),
       ),
     );
   }
@@ -145,11 +141,14 @@ class _CarCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(AppDimensions.radiusL)),
                   child: car.mainPhoto != null
-                      ? Image.network(car.mainPhoto!,
-                          height: 160,
+                      ? Image.network(
+                          car.mainPhoto!,
+                          height: 180,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder())
+                          errorBuilder: (_, __, ___) =>
+                              _placeholder(),
+                        )
                       : _placeholder(),
                 ),
                 if (!car.isAvailable)
@@ -158,20 +157,23 @@ class _CarCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(AppDimensions.radiusL)),
+                            top: Radius.circular(
+                                AppDimensions.radiusL)),
                       ),
                       child: const Center(
-                        child: Text('Indisponible',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16)),
+                        child: Text(
+                          'Indisponible',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16),
+                        ),
                       ),
                     ),
                   ),
                 Positioned(
-                  top: 10,
-                  right: 10,
+                  top: 12,
+                  right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
@@ -182,7 +184,8 @@ class _CarCard extends StatelessWidget {
                     child: Text(
                       car.transmissionLabel,
                       style: const TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w600),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -197,18 +200,22 @@ class _CarCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(car.fullName,
-                            style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(
+                          car.fullName,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
                             _Tag(
                                 icon: Icons.people_outline,
                                 label: '${car.seats} places'),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             _Tag(
-                                icon: Icons.local_gas_station_outlined,
+                                icon:
+                                    Icons.local_gas_station_outlined,
                                 label: car.fuelLabel),
                           ],
                         ),
@@ -218,14 +225,19 @@ class _CarCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(FormatUtils.formatPrice(car.pricePerDay),
-                          style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary)),
-                      const Text('par jour',
-                          style: TextStyle(
-                              fontSize: 11, color: AppColors.textSecondary)),
+                      Text(
+                        FormatUtils.formatPrice(car.pricePerDay),
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary),
+                      ),
+                      const Text(
+                        'par jour',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary),
+                      ),
                     ],
                   ),
                 ],
@@ -237,15 +249,14 @@ class _CarCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
-    return Container(
-      height: 160,
-      color: AppColors.primaryLight,
-      child: const Center(
+  Widget _placeholder() => Container(
+        height: 180,
+        color: AppColors.primaryLight,
+        child: const Center(
           child: Icon(Icons.directions_car_rounded,
-              size: 64, color: AppColors.primary)),
-    );
-  }
+              size: 64, color: AppColors.primary),
+        ),
+      );
 }
 
 class _Tag extends StatelessWidget {

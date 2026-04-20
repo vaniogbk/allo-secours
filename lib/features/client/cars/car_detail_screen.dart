@@ -30,11 +30,12 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final carAsync = ref.watch(carDetailProvider(widget.carId));
-
     return carAsync.when(
       data: (car) => _buildBody(car),
       loading: () => const Scaffold(body: LoadingWidget()),
-      error: (e, _) => Scaffold(body: Center(child: Text('Erreur: $e'))),
+      error: (e, _) => Scaffold(
+        body: Center(child: Text('Erreur: $e')),
+      ),
     );
   }
 
@@ -62,8 +63,10 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                   ? Container(
                       color: AppColors.primaryLight,
                       child: const Center(
-                          child: Icon(Icons.directions_car_rounded,
-                              size: 80, color: AppColors.primary)))
+                        child: Icon(Icons.directions_car_rounded,
+                            size: 80, color: AppColors.primary),
+                      ),
+                    )
                   : Stack(
                       children: [
                         PageView.builder(
@@ -76,8 +79,10 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                               color: AppColors.primaryLight,
-                              child: const Icon(Icons.directions_car_rounded,
-                                  size: 80, color: AppColors.primary),
+                              child: const Icon(
+                                  Icons.directions_car_rounded,
+                                  size: 80,
+                                  color: AppColors.primary),
                             ),
                           ),
                         ),
@@ -87,20 +92,24 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                             left: 0,
                             right: 0,
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment:
+                                  MainAxisAlignment.center,
                               children: List.generate(
                                 car.photos.length,
                                 (i) => AnimatedContainer(
-                                  duration: const Duration(milliseconds: 250),
-                                  margin:
-                                      const EdgeInsets.symmetric(horizontal: 3),
+                                  duration: const Duration(
+                                      milliseconds: 250),
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 3),
                                   width: _currentPhoto == i ? 18 : 6,
                                   height: 6,
                                   decoration: BoxDecoration(
                                     color: _currentPhoto == i
                                         ? AppColors.primary
-                                        : Colors.white.withOpacity(0.6),
-                                    borderRadius: BorderRadius.circular(10),
+                                        : Colors.white
+                                            .withOpacity(0.6),
+                                    borderRadius:
+                                        BorderRadius.circular(10),
                                   ),
                                 ),
                               ),
@@ -114,8 +123,8 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
             child: Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24)),
               ),
               padding: const EdgeInsets.all(AppDimensions.paddingL),
               child: Column(
@@ -124,9 +133,12 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(car.fullName,
-                            style: const TextStyle(
-                                fontSize: 22, fontWeight: FontWeight.w800)),
+                        child: Text(
+                          car.fullName,
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800),
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -138,7 +150,9 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          car.isAvailable ? 'Disponible' : 'Indisponible',
+                          car.isAvailable
+                              ? 'Disponible'
+                              : 'Indisponible',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -149,45 +163,26 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  // Prix
+                  const SizedBox(height: 20),
                   Row(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Prix / jour',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary)),
-                          Text(FormatUtils.formatPrice(car.pricePerDay),
-                              style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary)),
-                        ],
+                      _PriceBox(
+                        label: 'Prix / jour',
+                        value:
+                            FormatUtils.formatPrice(car.pricePerDay),
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(width: 32),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Caution',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary)),
-                          Text(FormatUtils.formatPrice(car.deposit),
-                              style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary)),
-                        ],
+                      const SizedBox(width: 16),
+                      _PriceBox(
+                        label: 'Caution',
+                        value: FormatUtils.formatPrice(car.deposit),
+                        color: AppColors.textPrimary,
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 16),
-                  // Caracteristiques
                   const Text('Caractéristiques',
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700)),
@@ -221,43 +216,46 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                       runSpacing: 8,
                       children: car.features
                           .map((f) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6),
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryLight,
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius:
+                                      BorderRadius.circular(20),
                                 ),
                                 child: Text(f,
                                     style: const TextStyle(
                                         fontSize: 12,
                                         color: AppColors.primary,
-                                        fontWeight: FontWeight.w500)),
+                                        fontWeight:
+                                            FontWeight.w500)),
                               ))
                           .toList(),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  // Description
                   if (car.description.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 16),
                     const Text('Description',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w700)),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700)),
                     const SizedBox(height: 10),
                     Text(car.description,
                         style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
                             height: 1.6)),
-                    const SizedBox(height: 20),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
                   if (car.isAvailable)
                     CustomButton(
                       label: 'Réserver cette voiture',
-                      onPressed: () =>
-                          context.push('/client/cars/${car.id}/book'),
+                      onPressed: () => context
+                          .push('/client/cars/${car.id}/book'),
                       prefixIcon: Icons.calendar_month_rounded,
                     )
                   else
@@ -277,6 +275,31 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
   }
 }
 
+class _PriceBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _PriceBox(
+      {required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 12, color: AppColors.textSecondary)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: color)),
+      ],
+    );
+  }
+}
+
 class _FeatureItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -285,7 +308,8 @@ class _FeatureItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(10),

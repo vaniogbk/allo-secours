@@ -31,7 +31,7 @@ class ParcelService {
     final trackingCode = FormatUtils.generateTrackingCode();
     final now = DateTime.now();
 
-    final parcel = {
+    final ref = await _col.add({
       'senderId': sender.id,
       'senderName': sender.fullName,
       'senderAddress': senderAddress,
@@ -56,30 +56,37 @@ class ParcelService {
       'note': note,
       'createdAt': FieldValue.serverTimestamp(),
       'estimatedDelivery': Timestamp.fromDate(
-          now.add(Duration(days: type == ParcelType.express ? 1 : 3))),
-    };
-
-    final ref = await _col.add(parcel);
+        now.add(Duration(
+            days: type == ParcelType.express ? 1 : 3)),
+      ),
+    });
     return ref.id;
   }
 
+  // Requête simple senderId + createdAt
   Stream<List<ParcelModel>> getUserParcels(String userId) {
     return _col
         .where('senderId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((s) => s.docs.map((d) => ParcelModel.fromDoc(d)).toList());
+        .map((s) =>
+            s.docs.map((d) => ParcelModel.fromDoc(d)).toList());
   }
 
-  Stream<List<ParcelModel>> getAllParcels({String? status}) {
-    Query q = _col.orderBy('createdAt', descending: true);
-    if (status != null) q = q.where('status', isEqualTo: status);
-    return q.snapshots()
-        .map((s) => s.docs.map((d) => ParcelModel.fromDoc(d)).toList());
+  // Requête simple sans filtre status
+  Stream<List<ParcelModel>> getAllParcels() {
+    return _col
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => ParcelModel.fromDoc(d)).toList());
   }
 
   Future<ParcelModel?> getParcelByTracking(String code) async {
-    final snap = await _col.where('trackingCode', isEqualTo: code).limit(1).get();
+    final snap = await _col
+        .where('trackingCode', isEqualTo: code)
+        .limit(1)
+        .get();
     if (snap.docs.isEmpty) return null;
     return ParcelModel.fromDoc(snap.docs.first);
   }
@@ -88,7 +95,11 @@ class ParcelService {
       _col.doc(id).snapshots().map((d) => ParcelModel.fromDoc(d));
 
   Future<void> updateStatus(
-      String id, ParcelStatus status, String label, {String? note}) async {
+    String id,
+    ParcelStatus status,
+    String label, {
+    String? note,
+  }) async {
     final entry = {
       'status': status.name,
       'label': label,

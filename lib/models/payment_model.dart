@@ -53,13 +53,16 @@ class PaymentModel {
       id: id,
       userId: map['userId'] ?? '',
       userName: map['userName'],
-      type: map['type'] == 'parcel' ? PaymentType.parcel : PaymentType.reservation,
+      type: map['type'] == 'parcel'
+          ? PaymentType.parcel
+          : PaymentType.reservation,
       refId: map['refId'] ?? '',
       amount: (map['amount'] ?? 0).toDouble(),
       status: _parseStatus(map['status']),
       method: _parseMethod(map['method']),
       transactionRef: map['transactionRef'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt:
+          (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

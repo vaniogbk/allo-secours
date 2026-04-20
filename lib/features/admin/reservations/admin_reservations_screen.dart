@@ -9,25 +9,16 @@ import '../../../core/widgets/loading_widget.dart';
 import '../../../models/reservation_model.dart';
 import '../../../providers/reservation_provider.dart';
 
-class AdminReservationsScreen extends ConsumerWidget {
+class AdminReservationsScreen extends ConsumerStatefulWidget {
   const AdminReservationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const AdminReservationsScreenEmbedded();
-  }
+  ConsumerState<AdminReservationsScreen> createState() =>
+      _AdminReservationsScreenState();
 }
 
-class AdminReservationsScreenEmbedded extends ConsumerStatefulWidget {
-  const AdminReservationsScreenEmbedded({super.key});
-
-  @override
-  ConsumerState<AdminReservationsScreenEmbedded> createState() =>
-      _AdminReservationsScreenEmbeddedState();
-}
-
-class _AdminReservationsScreenEmbeddedState
-    extends ConsumerState<AdminReservationsScreenEmbedded>
+class _AdminReservationsScreenState
+    extends ConsumerState<AdminReservationsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
@@ -48,8 +39,9 @@ class _AdminReservationsScreenEmbeddedState
     final resAsync = ref.watch(allReservationsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
         title: const Text('Gestion des réservations'),
         bottom: TabBar(
@@ -69,8 +61,10 @@ class _AdminReservationsScreenEmbeddedState
       body: resAsync.when(
         data: (list) {
           final all = list;
-          final pending =
-              list.where((r) => r.status == ReservationStatus.pending).toList();
+          final pending = list
+              .where((r) =>
+                  r.status == ReservationStatus.pending)
+              .toList();
           final active = list
               .where((r) =>
                   r.status == ReservationStatus.active ||
@@ -92,8 +86,10 @@ class _AdminReservationsScreenEmbeddedState
             ],
           );
         },
-        loading: () => const ShimmerList(count: 4, itemHeight: 130),
-        error: (e, _) => Center(child: Text('Erreur: $e')),
+        loading: () =>
+            const ShimmerList(count: 4, itemHeight: 140),
+        error: (e, _) =>
+            Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -114,7 +110,8 @@ class _ResList extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       itemCount: reservations.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _AdminResCard(res: reservations[i]),
+      itemBuilder: (_, i) =>
+          _AdminResCard(res: reservations[i]),
     );
   }
 }
@@ -126,7 +123,7 @@ class _AdminResCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -145,32 +142,35 @@ class _AdminResCard extends ConsumerWidget {
                   children: [
                     Text(res.carFullName,
                         style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700)),
-                    Text(res.userName ?? '',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                    Text(res.userName ?? 'Client inconnu',
                         style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             color: AppColors.textSecondary)),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                    horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.getStatusBgColor(res.status.name),
+                  color: AppColors.getStatusBgColor(
+                      res.status.name),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(res.statusLabel,
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.getStatusColor(res.status.name))),
+                        color: AppColors.getStatusColor(
+                            res.status.name))),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           const Divider(height: 1),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
               const Icon(Icons.calendar_today_outlined,
@@ -178,78 +178,94 @@ class _AdminResCard extends ConsumerWidget {
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                    '${AppDateUtils.formatDate(res.startDate)} → ${AppDateUtils.formatDate(res.endDate)}',
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                  '${AppDateUtils.formatDate(res.startDate)} → ${AppDateUtils.formatDate(res.endDate)}',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary),
+                ),
               ),
               Text(FormatUtils.formatPrice(res.totalPrice),
                   style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary)),
             ],
           ),
-          const SizedBox(height: 10),
-          if (res.status == ReservationStatus.pending)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () =>
-                        _updateStatus(context, ref, ReservationStatus.cancelled),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error)),
-                    child: const Text('Refuser',
-                        style: TextStyle(fontSize: 12)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        _updateStatus(context, ref, ReservationStatus.confirmed),
-                    child: const Text('Confirmer',
-                        style: TextStyle(fontSize: 12)),
-                  ),
-                ),
-              ],
-            )
-          else if (res.status == ReservationStatus.confirmed)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () =>
-                    _updateStatus(context, ref, ReservationStatus.active),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary),
-                child: const Text('Marquer En cours'),
-              ),
-            )
-          else if (res.status == ReservationStatus.active)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () =>
-                    _updateStatus(context, ref, ReservationStatus.completed),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success),
-                child: const Text('Marquer Terminée'),
-              ),
-            ),
+          const SizedBox(height: 12),
+          _buildActions(context, ref),
         ],
       ),
     );
   }
 
-  Future<void> _updateStatus(BuildContext context, WidgetRef ref,
+  Widget _buildActions(BuildContext context, WidgetRef ref) {
+    switch (res.status) {
+      case ReservationStatus.pending:
+        return Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _update(
+                    context, ref, ReservationStatus.cancelled),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(
+                        color: AppColors.error)),
+                child: const Text('Refuser',
+                    style: TextStyle(fontSize: 13)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => _update(
+                    context, ref, ReservationStatus.confirmed),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary),
+                child: const Text('Confirmer',
+                    style: TextStyle(fontSize: 13)),
+              ),
+            ),
+          ],
+        );
+      case ReservationStatus.confirmed:
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _update(
+                context, ref, ReservationStatus.active),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary),
+            child: const Text('Marquer En cours'),
+          ),
+        );
+      case ReservationStatus.active:
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _update(
+                context, ref, ReservationStatus.completed),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success),
+            child: const Text('Marquer Terminée'),
+          ),
+        );
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Future<void> _update(BuildContext context, WidgetRef ref,
       ReservationStatus status) async {
     await ref
         .read(reservationServiceProvider)
         .updateStatus(res.id, status);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Statut mis à jour: ${res.statusLabel}')),
+        SnackBar(
+          content: Text('Statut mis à jour'),
+          backgroundColor: AppColors.success,
+        ),
       );
     }
   }
