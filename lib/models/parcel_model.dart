@@ -49,9 +49,13 @@ class ParcelModel {
   final String senderName;
   final String senderAddress;
   final String senderPhone;
+  final double? senderLatitude;
+  final double? senderLongitude;
   final String recipientName;
   final String recipientPhone;
   final String recipientAddress;
+  final double? recipientLatitude;
+  final double? recipientLongitude;
   final double weight;
   final String? dimensions;
   final ParcelType type;
@@ -60,6 +64,8 @@ class ParcelModel {
   final ParcelStatus status;
   final List<ParcelStatusHistory> statusHistory;
   final String? note;
+  final bool paymentVerified;
+  final String? emergencyContactNumber;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? estimatedDelivery;
@@ -70,9 +76,13 @@ class ParcelModel {
     required this.senderName,
     required this.senderAddress,
     required this.senderPhone,
+    this.senderLatitude,
+    this.senderLongitude,
     required this.recipientName,
     required this.recipientPhone,
     required this.recipientAddress,
+    this.recipientLatitude,
+    this.recipientLongitude,
     required this.weight,
     this.dimensions,
     required this.type,
@@ -81,6 +91,8 @@ class ParcelModel {
     required this.status,
     this.statusHistory = const [],
     this.note,
+    this.paymentVerified = false,
+    this.emergencyContactNumber,
     required this.createdAt,
     this.updatedAt,
     this.estimatedDelivery,
@@ -111,9 +123,13 @@ class ParcelModel {
       senderName: map['senderName'] ?? '',
       senderAddress: map['senderAddress'] ?? '',
       senderPhone: map['senderPhone'] ?? '',
+      senderLatitude: (map['senderLatitude'] as num?)?.toDouble(),
+      senderLongitude: (map['senderLongitude'] as num?)?.toDouble(),
       recipientName: map['recipientName'] ?? '',
       recipientPhone: map['recipientPhone'] ?? '',
       recipientAddress: map['recipientAddress'] ?? '',
+      recipientLatitude: (map['recipientLatitude'] as num?)?.toDouble(),
+      recipientLongitude: (map['recipientLongitude'] as num?)?.toDouble(),
       weight: (map['weight'] ?? 0).toDouble(),
       dimensions: map['dimensions'],
       type: _parseType(map['type']),
@@ -125,6 +141,8 @@ class ParcelModel {
               ParcelStatusHistory.fromMap(e as Map<String, dynamic>))
           .toList(),
       note: map['note'],
+      paymentVerified: map['paymentVerified'] ?? false,
+      emergencyContactNumber: map['emergencyContactNumber'],
       createdAt:
           (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
@@ -149,9 +167,13 @@ class ParcelModel {
         'senderName': senderName,
         'senderAddress': senderAddress,
         'senderPhone': senderPhone,
+        'senderLatitude': senderLatitude,
+        'senderLongitude': senderLongitude,
         'recipientName': recipientName,
         'recipientPhone': recipientPhone,
         'recipientAddress': recipientAddress,
+        'recipientLatitude': recipientLatitude,
+        'recipientLongitude': recipientLongitude,
         'weight': weight,
         'dimensions': dimensions,
         'type': type.name,
@@ -160,6 +182,8 @@ class ParcelModel {
         'status': status.name,
         'statusHistory': statusHistory.map((e) => e.toMap()).toList(),
         'note': note,
+        'paymentVerified': paymentVerified,
+        'emergencyContactNumber': emergencyContactNumber,
         'createdAt': Timestamp.fromDate(createdAt),
         'updatedAt':
             updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
@@ -171,6 +195,8 @@ class ParcelModel {
   ParcelModel copyWith({
     ParcelStatus? status,
     List<ParcelStatusHistory>? statusHistory,
+    bool? paymentVerified,
+    String? emergencyContactNumber,
     DateTime? updatedAt,
   }) {
     return ParcelModel(
@@ -190,6 +216,9 @@ class ParcelModel {
       status: status ?? this.status,
       statusHistory: statusHistory ?? this.statusHistory,
       note: note,
+      paymentVerified: paymentVerified ?? this.paymentVerified,
+      emergencyContactNumber:
+          emergencyContactNumber ?? this.emergencyContactNumber,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       estimatedDelivery: estimatedDelivery,

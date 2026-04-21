@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/format_utils.dart';
+import '../../../core/widgets/cloudinary_image.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/car_model.dart';
@@ -74,10 +75,11 @@ class _CarDetailScreenState extends ConsumerState<CarDetailScreen> {
                           itemCount: car.photos.length,
                           onPageChanged: (i) =>
                               setState(() => _currentPhoto = i),
-                          itemBuilder: (_, i) => Image.network(
-                            car.photos[i],
+                          itemBuilder: (_, i) => CloudinaryImage(
+                            imageUrl: car.photos[i],
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            optimizedWidth: 1400,
+                            errorWidget: Container(
                               color: AppColors.primaryLight,
                               child: const Icon(
                                   Icons.directions_car_rounded,

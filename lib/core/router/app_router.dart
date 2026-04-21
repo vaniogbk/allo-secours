@@ -11,29 +11,29 @@ import '../../features/client/cars/car_detail_screen.dart';
 import '../../features/client/cars/car_booking_screen.dart';
 import '../../features/client/parcels/parcel_list_screen.dart';
 import '../../features/client/parcels/create_parcel_screen.dart';
+import '../../features/client/parcels/edit_parcel_screen.dart';
 import '../../features/client/parcels/parcel_tracking_screen.dart';
 import '../../features/client/reservations/my_reservations_screen.dart';
 import '../../features/client/notifications/notifications_screen.dart';
 import '../../features/client/profile/profile_screen.dart';
 import '../../features/client/profile/edit_profile_screen.dart';
 import '../../features/client/support/support_screen.dart';
+import '../../features/client/payment/payment_screen.dart';
+import '../../features/client/payment/card_payment_screen.dart';
+import '../../features/client/payment/mobile_money_payment_screen.dart';
 import '../../features/admin/home/admin_home_screen.dart';
-import '../../features/admin/cars/admin_cars_screen.dart';
 import '../../features/admin/cars/admin_add_car_screen.dart';
-import '../../features/admin/reservations/admin_reservations_screen.dart';
-import '../../features/admin/parcels/admin_parcels_screen.dart';
-import '../../features/admin/clients/admin_clients_screen.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/auth_service.dart';
 import '../../core/constants/app_colors.dart';
+import '../../models/payment_model.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
   return GoRouter(
     initialLocation: '/splash',
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: false,
     redirect: (context, state) async {
       final user = authState.valueOrNull;
       final isLoggedIn = user != null;
@@ -129,6 +129,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             parcelId: s.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/client/parcels/:id/edit',
+        builder: (_, s) =>
+            EditParcelScreen(parcelId: s.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/client/reservations',
         builder: (_, __) => const MyReservationsScreen(),
       ),
@@ -148,15 +153,74 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/client/support',
         builder: (_, __) => const SupportScreen(),
       ),
+      GoRoute(
+        path: '/payment',
+        builder: (_, s) {
+          final referenceId = s.uri.queryParameters['ref_id'] ??
+              s.uri.queryParameters['reservation_id'] ??
+              '';
+          final amount = double.tryParse(
+                  s.uri.queryParameters['amount'] ?? '') ??
+              0.0;
+          final itemName =
+              s.uri.queryParameters['item_name'] ?? 'Reservation';
+          final typeRaw =
+              s.uri.queryParameters['type'] ?? 'reservation';
+          final paymentType = typeRaw == 'parcel'
+              ? PaymentType.parcel
+              : PaymentType.reservation;
+
+          return PaymentScreen(
+            referenceId: referenceId,
+            amount: amount,
+            itemName: itemName,
+            paymentType: paymentType,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payment/card/:paymentId',
+        builder: (_, s) {
+          final rawAmount = (s.extra as Map<String, dynamic>?)?['amount'];
+          final amountFromQuery =
+              double.tryParse(s.uri.queryParameters['amount'] ?? '');
+          final amount = amountFromQuery ??
+              (rawAmount is num ? rawAmount.toDouble() : 0.0);
+          final redirectTo =
+              s.uri.queryParameters['next'] ?? '/client/reservations';
+          return CardPaymentScreen(
+            paymentId: s.pathParameters['paymentId']!,
+            amount: amount,
+            redirectTo: redirectTo,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payment/mobile-money/:paymentId',
+        builder: (_, s) {
+          final rawAmount = (s.extra as Map<String, dynamic>?)?['amount'];
+          final amountFromQuery =
+              double.tryParse(s.uri.queryParameters['amount'] ?? '');
+          final amount = amountFromQuery ??
+              (rawAmount is num ? rawAmount.toDouble() : 0.0);
+          final redirectTo =
+              s.uri.queryParameters['next'] ?? '/client/reservations';
+          return MobileMoneyPaymentScreen(
+            paymentId: s.pathParameters['paymentId']!,
+            amount: amount,
+            redirectTo: redirectTo,
+          );
+        },
+      ),
 
       // ── ADMIN ROUTES ──
       GoRoute(
         path: '/admin/home',
-        builder: (_, __) => const AdminHomeScreen(),
+        builder: (_, __) => const AdminHomeScreen(currentIndex: 0),
       ),
       GoRoute(
         path: '/admin/cars',
-        builder: (_, __) => const AdminCarsScreen(),
+        builder: (_, __) => const AdminHomeScreen(currentIndex: 1),
       ),
       GoRoute(
         path: '/admin/cars/add',
@@ -169,18 +233,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/reservations',
-        builder: (_, __) => const AdminReservationsScreen(),
+        builder: (_, __) => const AdminHomeScreen(currentIndex: 2),
       ),
       GoRoute(
         path: '/admin/parcels',
-        builder: (_, __) => const AdminParcelsScreen(),
+        builder: (_, __) => const AdminHomeScreen(currentIndex: 3),
       ),
       GoRoute(
         path: '/admin/clients',
-        builder: (_, __) => const AdminClientsScreen(),
+        builder: (_, __) => const AdminHomeScreen(currentIndex: 4),
       ),
     ],
-    errorBuilder: (_, state) => Scaffold(
+    errorBuilder: (context, state) => Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: Column(
@@ -203,7 +267,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => _.go('/auth/login'),
+              onPressed: () => context.go('/auth/login'),
               child: const Text('Retour à l\'accueil'),
             ),
           ],

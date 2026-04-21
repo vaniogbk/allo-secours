@@ -25,6 +25,13 @@ class _AdminCarsScreenState extends ConsumerState<AdminCarsScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/admin/cars/add'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Ajouter'),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         automaticallyImplyLeading: false,

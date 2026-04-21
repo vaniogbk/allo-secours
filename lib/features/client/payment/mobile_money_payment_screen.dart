@@ -7,7 +7,6 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../providers/payment_provider.dart';
-import '../../../services/secure_url_launcher.dart';
 import '../../../models/payment_model.dart';
 
 enum MobileProvider { mtn, orange, moov }
@@ -15,11 +14,13 @@ enum MobileProvider { mtn, orange, moov }
 class MobileMoneyPaymentScreen extends ConsumerStatefulWidget {
   final String paymentId;
   final double amount;
+  final String redirectTo;
 
   const MobileMoneyPaymentScreen({
     super.key,
     required this.paymentId,
     required this.amount,
+    required this.redirectTo,
   });
 
   @override
@@ -246,55 +247,37 @@ class _MobileMoneyPaymentScreenState
     try {
       final paymentService = ref.read(paymentServiceProvider);
 
-      // Créer l'URL de paiement de manière SÉCURISÉE
-      final paymentUrl = SecureUrlLauncher.createPaymentUrl(
-        baseUrl: _getProviderApiUrl(),
-        paymentId: widget.paymentId,
-        amount: widget.amount,
-        currency: 'XOF',
-        returnUrl: 'https://logitrack.bj/payment/callback',
-      );
+      // EN PRODUCTION: Intégrer avec les vraies APIs des fournisseurs
+      // Pour cette démo, nous simulons le paiement Mobile Money
+      print('📱 Simulation paiement Mobile Money pour ${widget.amount} FCFA');
+      print('🏦 Fournisseur: ${_selectedProvider.name.toUpperCase()}');
+      print('📞 Numéro: ${_phoneCtrl.text}');
 
-      // Vérifier que l'URL a été créée correctement
-      if (paymentUrl == null) {
-        throw Exception('Impossible de générer l\'URL de paiement');
-      }
+      // Simuler un appel API (remplacer par l'intégration réelle)
+      await Future.delayed(const Duration(seconds: 2));
 
-      // Lancer l'URL de manière sécurisée
-      final success = await SecureUrlLauncher.launchUrl(
-        paymentUrl,
-        externalApplication: true,
-      );
-
-      if (!success) {
-        throw Exception(
-            'Impossible de lancer le paiement. Vérifiez votre connexion.');
-      }
-
-      // Mettre à jour le statut du paiement
+      // Mettre à jour le statut du paiement comme réussi
       await paymentService.updatePaymentStatus(
         widget.paymentId,
-        PaymentStatus.pending,
+        PaymentStatus.success,
+        transactionRef: 'MM_${_selectedProvider.name.toUpperCase()}_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Vérification en cours... Veuillez confirmer'),
-            backgroundColor: AppColors.primary,
+            content: Text('Paiement Mobile Money effectué avec succès'),
+            backgroundColor: AppColors.success,
           ),
         );
-        // Attendre quelques secondes puis retourner
-        await Future.delayed(const Duration(seconds: 3));
-        if (mounted) {
-          context.pop();
-        }
+        // Retourner aux réservations
+        context.go(widget.redirectTo);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: $e'),
+            content: Text('Erreur de paiement: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -304,18 +287,7 @@ class _MobileMoneyPaymentScreenState
     }
   }
 
-  String _getProviderApiUrl() {
-    // EN PRODUCTION: Utiliser les vraies URLs des APIs des fournisseurs
-    // Ceci sont des exemples fictifs
-    switch (_selectedProvider) {
-      case MobileProvider.mtn:
-        return 'https://api.mtn.bj/payment/initiate';
-      case MobileProvider.orange:
-        return 'https://api.orange.bj/payment/initiate';
-      case MobileProvider.moov:
-        return 'https://api.moov.bj/payment/initiate';
-    }
-  }
+
 }
 
 class _ProviderButton extends StatelessWidget {

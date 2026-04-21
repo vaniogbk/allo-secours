@@ -11,11 +11,13 @@ import '../../../models/payment_model.dart';
 class CardPaymentScreen extends ConsumerStatefulWidget {
   final String paymentId;
   final double amount;
+  final String redirectTo;
 
   const CardPaymentScreen({
     super.key,
     required this.paymentId,
     required this.amount,
+    required this.redirectTo,
   });
 
   @override
@@ -267,19 +269,43 @@ class _CardPaymentScreenState extends ConsumerState<CardPaymentScreen> {
   }
 
   Future<void> _processPayment() async {
+    // Valider les champs
+    final cardError = _validateCardNumber(_cardNumberCtrl.text);
+    final cardholderError = _cardholderCtrl.text.isEmpty ? 'Champ obligatoire' : null;
+    final expiryError = _validateExpiry(_expiryCtrl.text);
+    final cvvError = _validateCvv(_cvvCtrl.text);
+
+    if (cardError != null || cardholderError != null || expiryError != null || cvvError != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              cardError ?? cardholderError ?? expiryError ?? cvvError ?? 'Erreur de validation',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _loading = true);
     try {
       final paymentService = ref.read(paymentServiceProvider);
 
-      // EN PRODUCTION: Utiliser un vrai processeur de paiement
+      // EN PRODUCTION: Utiliser un vrai processeur de paiement (Stripe, Square, etc.)
       // Pour cette démo, nous simulons un paiement réussi
+      print('💳 Simulation paiement par carte');
+      print('💰 Montant: ${widget.amount} FCFA');
+      print('🏷️ Titulaire: ${_cardholderCtrl.text}');
+
       await Future.delayed(const Duration(seconds: 2));
 
       // Mettre à jour le statut du paiement
       await paymentService.updatePaymentStatus(
         widget.paymentId,
         PaymentStatus.success,
-        transactionRef: 'TXN_${DateTime.now().millisecondsSinceEpoch}',
+        transactionRef: 'CARD_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       if (mounted) {
@@ -290,7 +316,7 @@ class _CardPaymentScreenState extends ConsumerState<CardPaymentScreen> {
           ),
         );
         // Retourner à la réservation
-        context.go('/client/reservations');
+        context.go(widget.redirectTo);
       }
     } catch (e) {
       if (mounted) {

@@ -27,6 +27,13 @@ class SecureUrlLauncher {
       return false;
     }
 
+    // Vérification spécifique pour les URLs de paiement
+    if (url.contains('about:bank') || url == 'about:bank') {
+      print('❌ Erreur: URL de paiement invalide détectée: $url');
+      print('💡 Conseil: Vérifiez que l\'API du fournisseur de paiement retourne une URL valide');
+      return false;
+    }
+
     try {
       final uri = Uri.parse(url);
 
@@ -40,6 +47,7 @@ class SecureUrlLauncher {
       // Validation 3: Vérifier avec canLaunchUrl avant de lancer
       if (await url_launcher.canLaunchUrl(uri)) {
         await url_launcher.launchUrl(uri, mode: mode);
+        print('✅ URL lancée avec succès: $url');
         return true;
       } else {
         print('❌ Erreur: Impossible de lancer l\'URL: $url');

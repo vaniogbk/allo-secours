@@ -13,6 +13,7 @@ class AppConfig {
   // Optimisation automatique des images
   static String optimizeUrl(String url, {int width = 800}) {
     if (url.isEmpty) return '';
+    if (!isCloudinaryUrl(url)) return url;
     return url.replaceFirst(
       '/upload/',
       '/upload/w_$width,q_auto,f_auto/',
@@ -22,4 +23,15 @@ class AppConfig {
   // Thumbnail pour les listes
   static String thumbnailUrl(String url) =>
       optimizeUrl(url, width: 400);
+
+  static bool isCloudinaryUrl(String url) {
+    return url.contains('res.cloudinary.com') ||
+        url.contains('api.cloudinary.com');
+  }
+
+  static String deliveryImageUrl(String url, {int? width}) {
+    if (url.isEmpty) return '';
+    if (!isCloudinaryUrl(url)) return url;
+    return optimizeUrl(url, width: width ?? 800);
+  }
 }

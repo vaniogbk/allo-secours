@@ -67,6 +67,70 @@ class ReservationService {
     await _col.doc(id).update(data);
   }
 
+  Future<void> markPaymentVerified(String id) async {
+    await _col.doc(id).update({
+      'paymentVerified': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Vérifier le paiement et marquer la réservation comme confirmée
+  Future<void> verifyPaymentAndConfirm(String id) async {
+    await _col.doc(id).update({
+      'paymentVerified': true,
+      'status': ReservationStatus.confirmed.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Annuler une réservation avec remboursement (7 jours max)
+  /// Retourne le montant du remboursement (0 si dépassé 7 jours)
+  Future<double> cancelWithRefund(String id, String reason) async {
+    final res = await getReservation(id);
+    final now = DateTime.now();
+    final diff = now.difference(res.createdAt).inDays;
+
+    // Remboursement intégral si annulation dans 7 jours
+    final refundAmount = diff <= 7 ? res.totalPrice : 0.0;
+
+    await _col.doc(id).update({
+      'status': ReservationStatus.cancelled.name,
+      'cancellationReason': reason,
+      'refundAmount': refundAmount,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    return refundAmount;
+  }
+
+  /// Marquer une réservation comme "non-présentation" (pas de remboursement)
+  Future<void> markNoShow(String id) async {
+    await _col.doc(id).update({
+      'noShow': true,
+      'noShowDate': FieldValue.serverTimestamp(),
+      'status': ReservationStatus.completed.name,
+      'refundAmount': 0.0,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Vérifier si la réservation peut être annulée avec remboursement
+  bool canRefund(ReservationModel reservation) {
+    if (reservation.noShow) return false;
+    final diff = DateTime.now().difference(reservation.createdAt).inDays;
+    return diff <= 7;
+  }
+
+  /// Vérifier si le paiement d'une réservation est vérifié
+  Future<bool> isPaymentVerified(String reservationId) async {
+    final doc = await _col.doc(reservationId).get();
+    return doc.get('paymentVerified') ?? false;
+  }
+
+  Future<void> deleteReservation(String id) async {
+    await _col.doc(id).delete();
+  }
+
   Future<bool> isCarAvailable(
       String carId, DateTime start, DateTime end) async {
     final snap = await _col

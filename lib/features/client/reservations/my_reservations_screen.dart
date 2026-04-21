@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/format_utils.dart';
+import '../../../core/widgets/cloudinary_image.dart';
 import '../../../core/widgets/empty_state_widget.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/reservation_model.dart';
@@ -134,13 +136,13 @@ class _ReservationCard extends ConsumerWidget {
                 borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16)),
                 child: res.carPhoto != null
-                    ? Image.network(
-                        res.carPhoto!,
+                    ? CloudinaryImage(
+                        imageUrl: res.carPhoto!,
                         height: 130,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _placeholder(),
+                        optimizedWidth: 900,
+                        errorWidget: _placeholder(),
                       )
                     : _placeholder(),
               ),
@@ -218,6 +220,19 @@ class _ReservationCard extends ConsumerWidget {
                   const SizedBox(height: 12),
                   const Divider(),
                   const SizedBox(height: 8),
+                  if (!res.paymentVerified) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push(
+                          '/payment?ref_id=${res.id}&amount=${res.totalPrice}&item_name=${Uri.encodeComponent(res.carFullName)}&type=reservation',
+                        ),
+                        icon: const Icon(Icons.payments_outlined, size: 16),
+                        label: const Text('Payer maintenant'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -239,6 +254,34 @@ class _ReservationCard extends ConsumerWidget {
                     ),
                   ),
                 ],
+                if (res.noShow) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Non-présentation enregistrée. La réservation est clôturée sans remboursement.',
+                    style: TextStyle(color: AppColors.error),
+                  ),
+                ],
+                if (res.paymentVerified &&
+                    res.status == ReservationStatus.pending) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Paiement reçu. La réservation reste en attente de validation par l\'admin.',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (res.refundAmount != null && res.refundAmount! > 0) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Remboursement prévu: ${FormatUtils.formatPrice(res.refundAmount!)}',
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -257,37 +300,81 @@ class _ReservationCard extends ConsumerWidget {
       );
 
   void _cancelDialog(BuildContext context, WidgetRef ref) {
+    final resService = ref.read(reservationServiceProvider);
+    final canRefund = resService.canRefund(res);
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20)),
         title: const Text('Annuler la réservation ?'),
-        content: const Text(
-            'Cette action est irréversible. Confirmez-vous ?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (canRefund) ...[
+              const Text(
+                  'Remboursement intégral disponible pour une annulation effectuée dans les 7 jours suivant la réservation.'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Montant remboursé: ${FormatUtils.formatPrice(res.totalPrice)}',
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary),
+                ),
+              ),
+            ] else ...[
+              const Text(
+                  'Le délai de remboursement de 7 jours est dépassé. Aucun remboursement ne sera effectué.'),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Non')),
+              child: const Text('Annuler')),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await ref
-                  .read(reservationServiceProvider)
-                  .updateStatus(
-                    res.id,
-                    ReservationStatus.cancelled,
-                    reason: 'Annulé par le client',
-                  );
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Réservation annulée')),
+              try {
+                final refund = await resService.cancelWithRefund(
+                  res.id,
+                  'Annulé par le client',
                 );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: refund > 0
+                          ? Text(
+                              'Réservation annulée. Remboursement: ${FormatUtils.formatPrice(refund)}')
+                          : const Text(
+                              'Réservation annulée. Pas de remboursement (délai dépassé)'),
+                      backgroundColor: refund > 0
+                          ? AppColors.success
+                          : AppColors.warning,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erreur: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               }
             },
-            child: const Text('Oui, annuler',
-                style: TextStyle(color: AppColors.error)),
+            child: const Text('Confirmer l\'annulation'),
           ),
         ],
       ),

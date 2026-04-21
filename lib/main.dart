@@ -41,10 +41,15 @@ void main() async {
   } catch (_) {}
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Erreur: ${details.exception}\n${details.stack}'),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Une erreur est survenue.\n${details.exception}',
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );

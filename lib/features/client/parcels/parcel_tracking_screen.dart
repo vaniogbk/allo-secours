@@ -10,6 +10,7 @@ import '../../../core/utils/format_utils.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/parcel_model.dart';
 import '../../../providers/parcel_provider.dart';
+import '../../../services/map_launcher_service.dart';
 
 class ParcelTrackingScreen extends ConsumerWidget {
   final String parcelId;
@@ -32,7 +33,7 @@ class ParcelTrackingScreen extends ConsumerWidget {
           if (parcel == null) {
             return const Center(child: Text('Accès non autorisé ou colis introuvable'));
           }
-          return _buildBody(context, parcel);
+          return _buildBody(context, ref, parcel);
         },
         loading: () => const LoadingWidget(),
         error: (e, _) =>
@@ -41,7 +42,8 @@ class ParcelTrackingScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, ParcelModel parcel) {
+  Widget _buildBody(BuildContext context, WidgetRef ref, ParcelModel parcel) {
+    final canModify = ref.read(parcelServiceProvider).canModifyParcel(parcel);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       child: Column(
@@ -200,6 +202,56 @@ class ParcelTrackingScreen extends ConsumerWidget {
               ],
             ),
           ),
+          if (parcel.senderLatitude != null && parcel.senderLongitude != null ||
+              parcel.recipientLatitude != null && parcel.recipientLongitude != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (parcel.senderLatitude != null && parcel.senderLongitude != null)
+                    OutlinedButton.icon(
+                      onPressed: () => MapLauncherService.openPoint(
+                        latitude: parcel.senderLatitude!,
+                        longitude: parcel.senderLongitude!,
+                      ),
+                      icon: const Icon(Icons.place_outlined, size: 16),
+                      label: const Text('Enlevement'),
+                    ),
+                  if (parcel.recipientLatitude != null &&
+                      parcel.recipientLongitude != null)
+                    OutlinedButton.icon(
+                      onPressed: () => MapLauncherService.openPoint(
+                        latitude: parcel.recipientLatitude!,
+                        longitude: parcel.recipientLongitude!,
+                      ),
+                      icon: const Icon(Icons.flag_outlined, size: 16),
+                      label: const Text('Livraison'),
+                    ),
+                  if (parcel.senderLatitude != null &&
+                      parcel.senderLongitude != null &&
+                      parcel.recipientLatitude != null &&
+                      parcel.recipientLongitude != null)
+                    ElevatedButton.icon(
+                      onPressed: () => MapLauncherService.openDirections(
+                        fromLat: parcel.senderLatitude!,
+                        fromLng: parcel.senderLongitude!,
+                        toLat: parcel.recipientLatitude!,
+                        toLng: parcel.recipientLongitude!,
+                      ),
+                      icon: const Icon(Icons.alt_route_rounded, size: 16),
+                      label: const Text('Voir l\'itineraire'),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           // Infos
@@ -248,6 +300,94 @@ class ParcelTrackingScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          if (!parcel.paymentVerified || canModify) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Actions',
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  if (!parcel.paymentVerified)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push(
+                          '/payment?ref_id=${parcel.id}&amount=${parcel.price}&item_name=${Uri.encodeComponent('Colis ${parcel.trackingCode}')}&type=parcel',
+                        ),
+                        icon: const Icon(Icons.payments_rounded, size: 18),
+                        label: const Text('Payer ce colis'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  if (!parcel.paymentVerified && canModify)
+                    const SizedBox(height: 10),
+                  if (canModify)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            context.push('/client/parcels/${parcel.id}/edit'),
+                        icon: const Icon(Icons.edit_rounded, size: 18),
+                        label: const Text('Modifier les informations'),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Contact d'urgence si pris en charge
+          if (parcel.paymentVerified && parcel.emergencyContactNumber != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.emergency_rounded,
+                          color: AppColors.primary, size: 20),
+                      SizedBox(width: 8),
+                      Text('Contact d\'urgence',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(parcel.emergencyContactNumber!,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Appelez ce numéro si le colis est déjà pris en charge et que vous avez besoin d\'assistance.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Timeline
           const Text('Historique',

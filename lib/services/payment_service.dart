@@ -28,9 +28,27 @@ class PaymentService {
 
   Future<void> updatePaymentStatus(String id, PaymentStatus status,
       {String? transactionRef}) async {
-    final data = <String, dynamic>{'status': status.name};
+    final data = <String, dynamic>{
+      'status': status.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
     if (transactionRef != null) data['transactionRef'] = transactionRef;
     await _col.doc(id).update(data);
+
+    if (status == PaymentStatus.success) {
+      final paymentDoc = await _col.doc(id).get();
+      if (!paymentDoc.exists) return;
+
+      final payment = PaymentModel.fromDoc(paymentDoc);
+      final targetCollection = payment.type == PaymentType.parcel
+          ? 'parcels'
+          : 'reservations';
+
+      await _db.collection(targetCollection).doc(payment.refId).update({
+        'paymentVerified': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   Stream<List<PaymentModel>> getAllPayments() {
@@ -58,5 +76,22 @@ class PaymentService {
       if (p.type == PaymentType.parcel) parcel += p.amount;
     }
     return {'total': total, 'reservation': reservation, 'parcel': parcel};
+  }
+
+  /// Obtenir le paiement réussi pour une référence (parcel ou reservation)
+  Future<PaymentModel?> getSuccessfulPaymentForRef(String refId) async {
+    final snap = await _col
+        .where('refId', isEqualTo: refId)
+        .where('status', isEqualTo: PaymentStatus.success.name)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return PaymentModel.fromDoc(snap.docs.first);
+  }
+
+  /// Vérifier si un paiement réussi existe pour une référence
+  Future<bool> hasSuccessfulPayment(String refId) async {
+    final payment = await getSuccessfulPaymentForRef(refId);
+    return payment != null;
   }
 }

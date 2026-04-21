@@ -19,7 +19,7 @@ final allReservationsProvider =
     StreamProvider<List<ReservationModel>>((ref) {
   final userAsync = ref.watch(userStreamProvider);
   final user = userAsync.valueOrNull;
-  if (user == null || user.role != 'admin') {
+  if (user == null || !user.isAdmin) {
     return Stream.value([]);
   }
   return ref.watch(reservationServiceProvider).getAllReservations();

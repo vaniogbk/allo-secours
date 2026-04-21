@@ -12,18 +12,17 @@ import '../../../models/notification_model.dart';
 import '../../../models/parcel_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/parcel_provider.dart';
+import '../../../services/location_service.dart';
 import '../../../services/notification_service.dart';
 
 class CreateParcelScreen extends ConsumerStatefulWidget {
   const CreateParcelScreen({super.key});
 
   @override
-  ConsumerState<CreateParcelScreen> createState() =>
-      _CreateParcelScreenState();
+  ConsumerState<CreateParcelScreen> createState() => _CreateParcelScreenState();
 }
 
-class _CreateParcelScreenState
-    extends ConsumerState<CreateParcelScreen> {
+class _CreateParcelScreenState extends ConsumerState<CreateParcelScreen> {
   final _formKey = GlobalKey<FormState>();
   final _senderAddressCtrl = TextEditingController();
   final _recipientNameCtrl = TextEditingController();
@@ -33,9 +32,17 @@ class _CreateParcelScreenState
   final _dimensionsCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
 
+  final _locationService = LocationService();
+
   ParcelType _type = ParcelType.standard;
   int _step = 0;
   bool _loading = false;
+  bool _locatingSender = false;
+
+  double? _senderLatitude;
+  double? _senderLongitude;
+  double? _recipientLatitude;
+  double? _recipientLongitude;
 
   @override
   void dispose() {
@@ -50,12 +57,46 @@ class _CreateParcelScreenState
   }
 
   double get _estimatedPrice {
-    final w = double.tryParse(
-            _weightCtrl.text.replaceAll(',', '.')) ??
-        0;
-    return ref
-        .read(parcelServiceProvider)
-        .calculatePrice(w, _type);
+    final w = double.tryParse(_weightCtrl.text.replaceAll(',', '.')) ?? 0;
+    return ref.read(parcelServiceProvider).calculatePrice(w, _type);
+  }
+
+  bool _validateCurrentStep() {
+    return _formKey.currentState!.validate();
+  }
+
+  Future<void> _useCurrentLocationForSender() async {
+    setState(() => _locatingSender = true);
+    try {
+      final point = await _locationService.getCurrentLocationWithAddress();
+      _senderLatitude = point.latitude;
+      _senderLongitude = point.longitude;
+      if (point.address != null && point.address!.trim().isNotEmpty) {
+        _senderAddressCtrl.text = point.address!;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Position actuelle recuperee'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Localisation indisponible: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _locatingSender = false);
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -65,43 +106,59 @@ class _CreateParcelScreenState
       final user = await ref.read(userStreamProvider.future);
       if (user == null) throw Exception('Utilisateur introuvable');
 
-      final id = await ref
-          .read(parcelServiceProvider)
-          .createParcel(
+      final senderGeo = _senderLatitude != null && _senderLongitude != null
+          ? GeoPointData(
+              latitude: _senderLatitude!,
+              longitude: _senderLongitude!,
+              address: _senderAddressCtrl.text.trim(),
+            )
+          : await _locationService.geocodeAddress(_senderAddressCtrl.text.trim());
+      final recipientGeo = await _locationService.geocodeAddress(
+        _recipientAddressCtrl.text.trim(),
+      );
+
+      _senderLatitude = senderGeo?.latitude;
+      _senderLongitude = senderGeo?.longitude;
+      _recipientLatitude = recipientGeo?.latitude;
+      _recipientLongitude = recipientGeo?.longitude;
+
+      final id = await ref.read(parcelServiceProvider).createParcel(
             sender: user,
             recipientName: _recipientNameCtrl.text.trim(),
             recipientPhone: _recipientPhoneCtrl.text.trim(),
             recipientAddress: _recipientAddressCtrl.text.trim(),
             senderAddress: _senderAddressCtrl.text.trim(),
-            weight: double.parse(
-                _weightCtrl.text.replaceAll(',', '.')),
+            senderLatitude: _senderLatitude,
+            senderLongitude: _senderLongitude,
+            recipientLatitude: _recipientLatitude,
+            recipientLongitude: _recipientLongitude,
+            weight: double.parse(_weightCtrl.text.replaceAll(',', '.')),
             dimensions:
-                _dimensionsCtrl.text.trim().isEmpty
-                    ? null
-                    : _dimensionsCtrl.text.trim(),
+                _dimensionsCtrl.text.trim().isEmpty ? null : _dimensionsCtrl.text.trim(),
             type: _type,
-            note: _noteCtrl.text.trim().isEmpty
-                ? null
-                : _noteCtrl.text.trim(),
+            note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
           );
 
       await NotificationService.saveNotification(
         userId: user.id,
-        title: 'Colis enregistré',
+        title: 'Colis enregistre',
         body:
-            'Votre envoi vers ${_recipientNameCtrl.text.trim()} a été créé avec succès.',
+            'Votre envoi vers ${_recipientNameCtrl.text.trim()} a ete cree avec succes.',
         type: NotificationType.parcel,
         refId: id,
       );
 
       if (mounted) {
+        final amount = _estimatedPrice;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Colis créé avec succès'),
+            content: Text('Colis cree. Passez maintenant au paiement.'),
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/client/parcels');
+        context.push(
+          '/payment?ref_id=$id&amount=$amount&item_name=${Uri.encodeComponent('Colis vers ${_recipientNameCtrl.text.trim()}')}&type=parcel',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -115,10 +172,6 @@ class _CreateParcelScreenState
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  bool _validateCurrentStep() {
-    return _formKey.currentState!.validate();
   }
 
   @override
@@ -136,34 +189,22 @@ class _CreateParcelScreenState
         key: _formKey,
         child: Column(
           children: [
-            // Stepper
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(
                 children: [
-                  _StepDot(
-                      index: 0,
-                      current: _step,
-                      label: 'Expéditeur'),
+                  _StepDot(index: 0, current: _step, label: 'Expediteur'),
                   _StepLine(active: _step >= 1),
-                  _StepDot(
-                      index: 1,
-                      current: _step,
-                      label: 'Destinataire'),
+                  _StepDot(index: 1, current: _step, label: 'Destinataire'),
                   _StepLine(active: _step >= 2),
-                  _StepDot(
-                      index: 2,
-                      current: _step,
-                      label: 'Colis'),
+                  _StepDot(index: 2, current: _step, label: 'Colis'),
                 ],
               ),
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.all(AppDimensions.paddingM),
+                padding: const EdgeInsets.all(AppDimensions.paddingM),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: _step == 0
@@ -178,21 +219,16 @@ class _CreateParcelScreenState
               padding: const EdgeInsets.all(AppDimensions.paddingM),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: AppColors.shadow,
-                      blurRadius: 12)
-                ],
+                boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 12)],
               ),
               child: Row(
                 children: [
                   if (_step > 0) ...[
                     Expanded(
                       child: CustomButton(
-                        label: 'Précédent',
+                        label: 'Precedent',
                         variant: ButtonVariant.outline,
-                        onPressed: () =>
-                            setState(() => _step--),
+                        onPressed: () => setState(() => _step--),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -206,8 +242,7 @@ class _CreateParcelScreenState
                                 setState(() => _step++);
                               }
                             },
-                            suffixIcon:
-                                Icons.arrow_forward_rounded,
+                            suffixIcon: Icons.arrow_forward_rounded,
                           )
                         : CustomButton(
                             label: 'Confirmer l\'envoi',
@@ -230,24 +265,50 @@ class _CreateParcelScreenState
       key: const ValueKey(0),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Adresse de départ',
-            style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.w700)),
+        const Text(
+          'Adresse de depart',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 6),
         const Text(
-            'L\'adresse où votre colis sera récupéré.',
-            style: TextStyle(
-                fontSize: 13, color: AppColors.textSecondary)),
+          'Utilisez votre position actuelle pour renseigner rapidement le point d\'enlevement.',
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+        ),
         const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _locatingSender ? null : _useCurrentLocationForSender,
+            icon: _locatingSender
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.my_location_rounded, size: 18),
+            label: const Text('Utiliser ma position actuelle'),
+          ),
+        ),
+        if (_senderLatitude != null && _senderLongitude != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            'GPS: ${_senderLatitude!.toStringAsFixed(5)}, ${_senderLongitude!.toStringAsFixed(5)}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
         CustomTextField(
-          label: 'Adresse d\'enlèvement',
+          label: 'Adresse d\'enlevement',
           hint: 'Rue, Quartier, Ville',
           controller: _senderAddressCtrl,
           prefixIcon: Icons.location_on_outlined,
           maxLines: 2,
           textCapitalization: TextCapitalization.sentences,
-          validator: (v) =>
-              Validators.required(v, 'L\'adresse'),
+          validator: (v) => Validators.required(v, 'L\'adresse'),
         ),
       ],
     );
@@ -258,9 +319,10 @@ class _CreateParcelScreenState
       key: const ValueKey(1),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Informations du destinataire',
-            style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.w700)),
+        const Text(
+          'Informations du destinataire',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 20),
         CustomTextField(
           label: 'Nom du destinataire',
@@ -272,7 +334,7 @@ class _CreateParcelScreenState
         ),
         const SizedBox(height: 14),
         CustomTextField(
-          label: 'Téléphone du destinataire',
+          label: 'Telephone du destinataire',
           hint: '+229 XX XX XX XX',
           controller: _recipientPhoneCtrl,
           keyboardType: TextInputType.phone,
@@ -287,8 +349,12 @@ class _CreateParcelScreenState
           prefixIcon: Icons.location_on_outlined,
           maxLines: 2,
           textCapitalization: TextCapitalization.sentences,
-          validator: (v) =>
-              Validators.required(v, 'L\'adresse'),
+          validator: (v) => Validators.required(v, 'L\'adresse'),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Les coordonnees GPS de livraison seront calculees automatiquement a partir de cette adresse.',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -299,20 +365,19 @@ class _CreateParcelScreenState
       key: const ValueKey(2),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Informations du colis',
-            style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.w700)),
+        const Text(
+          'Informations du colis',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 20),
         CustomTextField(
           label: 'Poids (kg)',
           hint: 'Ex: 2.5',
           controller: _weightCtrl,
-          keyboardType: const TextInputType.numberWithOptions(
-              decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           prefixIcon: Icons.scale_outlined,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(
-                RegExp(r'[\d,.]'))
+            FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
           ],
           onChanged: (_) => setState(() {}),
           validator: Validators.positiveNumber,
@@ -325,9 +390,10 @@ class _CreateParcelScreenState
           prefixIcon: Icons.straighten_outlined,
         ),
         const SizedBox(height: 20),
-        const Text('Type d\'envoi',
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w500)),
+        const Text(
+          'Type d\'envoi',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         const SizedBox(height: 10),
         Row(
           children: ParcelType.values.map((t) {
@@ -337,36 +403,35 @@ class _CreateParcelScreenState
                 onTap: () => setState(() => _type = t),
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primaryLight
-                        : Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(12),
+                    color: selected ? AppColors.primaryLight : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: selected
-                            ? AppColors.primary
-                            : AppColors.border,
-                        width: selected ? 1.5 : 1),
+                      color: selected ? AppColors.primary : AppColors.border,
+                      width: selected ? 1.5 : 1,
+                    ),
                   ),
                   child: Column(
                     children: [
-                      Icon(_typeIcon(t),
+                      Icon(
+                        _typeIcon(t),
+                        color: selected
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                        size: 22,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _typeLabel(t),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                           color: selected
                               ? AppColors.primary
                               : AppColors.textSecondary,
-                          size: 22),
-                      const SizedBox(height: 4),
-                      Text(_typeLabel(t),
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: selected
-                                  ? AppColors.primary
-                                  : AppColors
-                                      .textSecondary)),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -375,8 +440,7 @@ class _CreateParcelScreenState
           }).toList(),
         ),
         const SizedBox(height: 20),
-        if (_weightCtrl.text.isNotEmpty &&
-            _estimatedPrice > 0)
+        if (_weightCtrl.text.isNotEmpty && _estimatedPrice > 0)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -385,24 +449,26 @@ class _CreateParcelScreenState
             ),
             child: Row(
               children: [
-                const Icon(Icons.receipt_long_rounded,
-                    color: Colors.white, size: 24),
+                const Icon(
+                  Icons.receipt_long_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
                 Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Coût estimé',
-                        style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12)),
+                    const Text(
+                      'Cout estime',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
                     Text(
-                      FormatUtils.formatPrice(
-                          _estimatedPrice),
+                      FormatUtils.formatPrice(_estimatedPrice),
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800),
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -412,7 +478,7 @@ class _CreateParcelScreenState
         const SizedBox(height: 14),
         CustomTextField(
           label: 'Note (optionnel)',
-          hint: 'Instructions particulières...',
+          hint: 'Instructions particulieres...',
           controller: _noteCtrl,
           maxLines: 3,
           prefixIcon: Icons.note_outlined,
@@ -434,9 +500,12 @@ class _CreateParcelScreenState
 
   String _typeLabel(ParcelType t) {
     switch (t) {
-      case ParcelType.standard: return 'Standard';
-      case ParcelType.express: return 'Express';
-      case ParcelType.fragile: return 'Fragile';
+      case ParcelType.standard:
+        return 'Standard';
+      case ParcelType.express:
+        return 'Express';
+      case ParcelType.fragile:
+        return 'Fragile';
     }
   }
 }
@@ -445,10 +514,11 @@ class _StepDot extends StatelessWidget {
   final int index;
   final int current;
   final String label;
-  const _StepDot(
-      {required this.index,
-      required this.current,
-      required this.label});
+  const _StepDot({
+    required this.index,
+    required this.current,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -461,34 +531,31 @@ class _StepDot extends StatelessWidget {
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-            color: done || active
-                ? AppColors.primary
-                : AppColors.border,
+            color: done || active ? AppColors.primary : AppColors.border,
             shape: BoxShape.circle,
           ),
           child: Center(
             child: done
-                ? const Icon(Icons.check_rounded,
-                    size: 16, color: Colors.white)
-                : Text('${index + 1}',
+                ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                : Text(
+                    '${index + 1}',
                     style: TextStyle(
-                        color: active
-                            ? Colors.white
-                            : AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13)),
+                      color: active ? Colors.white : AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
           ),
         ),
         const SizedBox(height: 4),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: active
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
-                fontWeight: active
-                    ? FontWeight.w600
-                    : FontWeight.w400)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: active ? AppColors.primary : AppColors.textSecondary,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
       ],
     );
   }

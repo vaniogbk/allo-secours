@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/format_utils.dart';
+import '../../../core/widgets/cloudinary_image.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/car_model.dart';
 import '../../../models/parcel_model.dart';
@@ -672,13 +673,13 @@ class _CarCardSmall extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16)),
               child: car.mainPhoto != null
-                  ? Image.network(
-                      car.mainPhoto!,
+                  ? CloudinaryImage(
+                      imageUrl: car.mainPhoto!,
                       height: 110,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _placeholder(),
+                      optimizedWidth: 500,
+                      errorWidget: _placeholder(),
                     )
                   : _placeholder(),
             ),

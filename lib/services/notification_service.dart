@@ -50,4 +50,19 @@ class NotificationService {
     }
     await batch.commit();
   }
+
+  static Future<void> deleteNotification(String id) =>
+      _db.collection('notifications').doc(id).delete();
+
+  static Future<void> deleteAllNotifications(String userId) async {
+    final snap = await _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .get();
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
 }

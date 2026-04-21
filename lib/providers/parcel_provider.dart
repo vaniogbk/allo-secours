@@ -19,7 +19,7 @@ final allParcelsProvider =
     StreamProvider<List<ParcelModel>>((ref) {
   final userAsync = ref.watch(userStreamProvider);
   final user = userAsync.valueOrNull;
-  if (user == null || user.role != 'admin') {
+  if (user == null || !user.isAdmin) {
     return Stream.value([]);
   }
   return ref.watch(parcelServiceProvider).getAllParcels();
@@ -30,8 +30,10 @@ final parcelStreamProvider =
   final userAsync = ref.watch(userStreamProvider);
   final user = userAsync.valueOrNull;
   if (user == null) return Stream.value(null);
-  // Pour l'instant, permettre seulement si admin ou si c'est le sender (mais on ne sait pas sans lire)
-  // Idéalement, lire d'abord et vérifier, mais pour simplifier, restreindre aux admins
-  if (user.role != 'admin') return Stream.value(null);
-  return ref.watch(parcelServiceProvider).parcelStream(id);
+  return ref.watch(parcelServiceProvider).parcelStream(id).map((parcel) {
+    if (user.isAdmin || parcel.senderId == user.id) {
+      return parcel;
+    }
+    return null;
+  });
 });

@@ -8,7 +8,6 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

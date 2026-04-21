@@ -10,6 +10,8 @@ class UserModel {
   final String? photoUrl;
   final UserRole role;
   final bool isBlocked;
+  final bool isOnline;
+  final DateTime? lastSeen;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -21,6 +23,8 @@ class UserModel {
     this.photoUrl,
     this.role = UserRole.client,
     this.isBlocked = false,
+    this.isOnline = false,
+    this.lastSeen,
     required this.createdAt,
     this.updatedAt,
   });
@@ -44,6 +48,8 @@ class UserModel {
       photoUrl: map['photoUrl'],
       role: map['role'] == 'admin' ? UserRole.admin : UserRole.client,
       isBlocked: map['isBlocked'] ?? false,
+      isOnline: map['isOnline'] ?? false,
+      lastSeen: (map['lastSeen'] as Timestamp?)?.toDate(),
       createdAt:
           (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
@@ -60,6 +66,8 @@ class UserModel {
         'photoUrl': photoUrl,
         'role': role.name,
         'isBlocked': isBlocked,
+        'isOnline': isOnline,
+        'lastSeen': lastSeen != null ? Timestamp.fromDate(lastSeen!) : null,
         'createdAt': Timestamp.fromDate(createdAt),
         'updatedAt':
             updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
@@ -72,6 +80,8 @@ class UserModel {
     String? photoUrl,
     UserRole? role,
     bool? isBlocked,
+    bool? isOnline,
+    DateTime? lastSeen,
     DateTime? updatedAt,
   }) {
     return UserModel(
@@ -82,6 +92,8 @@ class UserModel {
       photoUrl: photoUrl ?? this.photoUrl,
       role: role ?? this.role,
       isBlocked: isBlocked ?? this.isBlocked,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeen: lastSeen ?? this.lastSeen,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

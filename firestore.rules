@@ -2,19 +2,76 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own user document
-    match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId && request.resource.data.role == 'client';
-      allow update: if request.auth != null && request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phone', 'photoUrl', 'updatedAt']);
-      // Allow admins to read and update all users
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    function isAuth() {
+      return request.auth != null;
     }
 
-    // Allow authenticated users to read/write other collections as needed
-    // For example, parcels, reservations, etc.
+    function isAdmin() {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(field) {
+      return isAuth() && request.auth.uid == resource.data[field];
+    }
+
+    function isCreatingOwnDoc(field) {
+      return isAuth() && request.resource.data[field] == request.auth.uid;
+    }
+
+    // USERS
+    // Chaque utilisateur gere son propre profil.
+    // L'admin peut tout voir et tout gerer.
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // CARS
+    match /cars/{carId} {
+      allow read: if isAuth();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // RESERVATIONS
+    match /reservations/{resId} {
+      allow read: if isAdmin() || isOwner('userId');
+      allow create: if isAdmin() || isCreatingOwnDoc('userId');
+      allow update: if isAdmin() || isOwner('userId');
+      allow delete: if isAdmin() || isOwner('userId');
+    }
+
+    // PARCELS
+    match /parcels/{parcelId} {
+      allow read: if isAdmin() || isOwner('senderId');
+      allow create: if isAdmin() || isCreatingOwnDoc('senderId');
+      allow update: if isAdmin() ||
+        (isOwner('senderId') && resource.data.status == 'pending');
+      allow delete: if isAdmin() || isOwner('senderId');
+    }
+
+    // NOTIFICATIONS
+    match /notifications/{notifId} {
+      allow read: if isAdmin() || isOwner('userId');
+      allow create: if isAdmin() || isCreatingOwnDoc('userId');
+      allow update: if isAdmin() || isOwner('userId');
+      allow delete: if isAdmin() || isOwner('userId');
+    }
+
+    // PAYMENTS
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || isOwner('userId');
+      allow create: if isAdmin() || isCreatingOwnDoc('userId');
+      allow update: if isAdmin() || isOwner('userId');
+      allow delete: if isAdmin() || isOwner('userId');
+    }
+
+    // Refus par defaut pour les autres collections.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

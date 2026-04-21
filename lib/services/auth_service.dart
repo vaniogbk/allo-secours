@@ -42,10 +42,30 @@ class AuthService {
   }) async {
     final cred = await _auth.signInWithEmailAndPassword(
         email: email, password: password);
-    return await getUser(cred.user!.uid);
+    final user = await getUser(cred.user!.uid);
+    // Marquer l'utilisateur comme en ligne
+    await _db.collection('users').doc(user.id).update({
+      'isOnline': true,
+    });
+    return user;
   }
 
-  Future<void> logout() => _auth.signOut();
+  Future<void> logout() async {
+    final uid = currentUser?.uid;
+
+    if (uid != null) {
+      try {
+        await _db.collection('users').doc(uid).update({
+          'isOnline': false,
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+      } catch (_) {
+        // La deconnexion doit continuer meme si la synchro Firestore echoue.
+      }
+    }
+
+    await _auth.signOut();
+  }
 
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordResetEmail(email: email);

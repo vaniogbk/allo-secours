@@ -1,1 +1,45 @@
-{"firestore":{"database":"(default)","location":"eur3","rules":"firestore.rules","indexes":"firestore.indexes.json"},"flutter":{"platforms":{"android":{"default":{"projectId":"logitrack-117b0","appId":"1:335735069521:android:885c796252e46ce20b9170","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"logitrack-117b0","configurations":{"android":"1:335735069521:android:885c796252e46ce20b9170","ios":"1:335735069521:ios:f9c5065c8b1631b30b9170","macos":"1:335735069521:ios:f9c5065c8b1631b30b9170","web":"1:335735069521:web:f16bf1dbba1b44510b9170","windows":"1:335735069521:web:480b104bde728f0f0b9170"}}}}}}
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "eur3",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "logitrack-117b0",
+          "appId": "1:335735069521:android:885c796252e46ce20b9170",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "logitrack-117b0",
+          "configurations": {
+            "android": "1:335735069521:android:885c796252e46ce20b9170",
+            "ios": "1:335735069521:ios:f9c5065c8b1631b30b9170",
+            "macos": "1:335735069521:ios:f9c5065c8b1631b30b9170",
+            "web": "1:335735069521:web:f16bf1dbba1b44510b9170",
+            "windows": "1:335735069521:web:480b104bde728f0f0b9170"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

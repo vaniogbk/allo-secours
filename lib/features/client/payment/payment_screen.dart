@@ -9,14 +9,14 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/payment_provider.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
-  final String reservationId;
+  final String referenceId;
   final double amount;
   final String itemName;
   final PaymentType paymentType;
 
   const PaymentScreen({
     super.key,
-    required this.reservationId,
+    required this.referenceId,
     required this.amount,
     required this.itemName,
     required this.paymentType,
@@ -131,14 +131,32 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Espèces
-            _PaymentMethodCard(
-              method: PaymentMethod.cash,
-              title: 'Paiement à la livraison',
-              subtitle: 'Payer en espèces au livreur',
-              icon: Icons.money_rounded,
-              isSelected: _selectedMethod == PaymentMethod.cash,
-              onTap: () => setState(() => _selectedMethod = PaymentMethod.cash),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Le paiement doit être effectué avant validation de la réservation ou prise en charge du colis.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 28),
 
@@ -197,6 +215,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     setState(() => _loading = true);
     try {
       final paymentService = ref.read(paymentServiceProvider);
+      final normalizedAmount =
+          double.parse(widget.amount.toStringAsFixed(2));
       
       // Obtenir l'utilisateur actuel
       final user = ref.read(authStateProvider).valueOrNull;
@@ -209,12 +229,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         userId: user.uid,
         userName: null, // Peut être obtenu plus tard si nécessaire
         type: widget.paymentType,
-        refId: widget.reservationId,
-        amount: widget.amount,
+        refId: widget.referenceId,
+        amount: normalizedAmount,
         method: _selectedMethod,
       );
 
       if (!mounted) return;
+
+      final redirectTo = widget.paymentType == PaymentType.parcel
+          ? '/client/parcels'
+          : '/client/reservations';
 
       // Selon la méthode sélectionnée
       switch (_selectedMethod) {
@@ -222,8 +246,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           // Rediriger vers le paiement par carte
           if (mounted) {
             context.push(
-              '/payment/card/$paymentId',
-              extra: {'amount': widget.amount},
+              '/payment/card/$paymentId?next=${Uri.encodeComponent(redirectTo)}&amount=$normalizedAmount',
+              extra: {'amount': normalizedAmount},
             );
           }
           break;
@@ -232,8 +256,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           // Rediriger vers le paiement Mobile Money
           if (mounted) {
             context.push(
-              '/payment/mobile-money/$paymentId',
-              extra: {'amount': widget.amount},
+              '/payment/mobile-money/$paymentId?next=${Uri.encodeComponent(redirectTo)}&amount=$normalizedAmount',
+              extra: {'amount': normalizedAmount},
             );
           }
           break;
@@ -252,7 +276,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 backgroundColor: AppColors.success,
               ),
             );
-            context.pop();
+            context.go(redirectTo);
           }
           break;
       }

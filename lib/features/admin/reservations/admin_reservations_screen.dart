@@ -43,7 +43,7 @@ class _AdminReservationsScreenState
       appBar: AppBar(
         backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
-        title: const Text('Gestion des réservations'),
+        title: const Text('Gestion des reservations'),
         bottom: TabBar(
           controller: _tabCtrl,
           labelColor: AppColors.primary,
@@ -54,7 +54,7 @@ class _AdminReservationsScreenState
             Tab(text: 'Toutes'),
             Tab(text: 'En attente'),
             Tab(text: 'En cours'),
-            Tab(text: 'Terminées'),
+            Tab(text: 'Terminees'),
           ],
         ),
       ),
@@ -62,8 +62,7 @@ class _AdminReservationsScreenState
         data: (list) {
           final all = list;
           final pending = list
-              .where((r) =>
-                  r.status == ReservationStatus.pending)
+              .where((r) => r.status == ReservationStatus.pending)
               .toList();
           final active = list
               .where((r) =>
@@ -86,10 +85,8 @@ class _AdminReservationsScreenState
             ],
           );
         },
-        loading: () =>
-            const ShimmerList(count: 4, itemHeight: 140),
-        error: (e, _) =>
-            Center(child: Text('Erreur: $e')),
+        loading: () => const ShimmerList(count: 4, itemHeight: 140),
+        error: (e, _) => Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -103,15 +100,15 @@ class _ResList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (reservations.isEmpty) {
       return const EmptyStateWidget(
-          icon: Icons.calendar_today_outlined,
-          title: 'Aucune réservation');
+        icon: Icons.calendar_today_outlined,
+        title: 'Aucune reservation',
+      );
     }
     return ListView.separated(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       itemCount: reservations.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) =>
-          _AdminResCard(res: reservations[i]),
+      itemBuilder: (_, i) => _AdminResCard(res: reservations[i]),
     );
   }
 }
@@ -128,7 +125,7 @@ class _AdminResCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 6)
+          BoxShadow(color: AppColors.shadow, blurRadius: 6),
         ],
       ),
       child: Column(
@@ -140,31 +137,38 @@ class _AdminResCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(res.carFullName,
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700)),
-                    Text(res.userName ?? 'Client inconnu',
-                        style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary)),
+                    Text(
+                      res.carFullName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      res.userName ?? 'Client inconnu',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.getStatusBgColor(
-                      res.status.name),
+                  color: AppColors.getStatusBgColor(res.status.name),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(res.statusLabel,
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.getStatusColor(
-                            res.status.name))),
+                child: Text(
+                  res.statusLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getStatusColor(res.status.name),
+                  ),
+                ),
               ),
             ],
           ),
@@ -173,22 +177,75 @@ class _AdminResCard extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 14, color: AppColors.textSecondary),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  '${AppDateUtils.formatDate(res.startDate)} → ${AppDateUtils.formatDate(res.endDate)}',
+                  '${AppDateUtils.formatDate(res.startDate)} -> ${AppDateUtils.formatDate(res.endDate)}',
                   style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary),
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
-              Text(FormatUtils.formatPrice(res.totalPrice),
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary)),
+              Text(
+                FormatUtils.formatPrice(res.totalPrice),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: res.paymentVerified
+                      ? AppColors.successLight
+                      : AppColors.warning.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  res.paymentVerified
+                      ? 'Paiement verifie'
+                      : 'Paiement en attente',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: res.paymentVerified
+                        ? AppColors.success
+                        : AppColors.warning,
+                  ),
+                ),
+              ),
+              if (res.noShow)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Non-presentation',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -201,29 +258,57 @@ class _AdminResCard extends ConsumerWidget {
   Widget _buildActions(BuildContext context, WidgetRef ref) {
     switch (res.status) {
       case ReservationStatus.pending:
-        return Row(
+        return Column(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => _update(
-                    context, ref, ReservationStatus.cancelled),
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(
-                        color: AppColors.error)),
-                child: const Text('Refuser',
-                    style: TextStyle(fontSize: 13)),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        _update(context, ref, ReservationStatus.cancelled),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                    ),
+                    child: const Text(
+                      'Refuser',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => res.paymentVerified
+                        ? _update(context, ref, ReservationStatus.confirmed)
+                        : _verifyAndConfirm(context, ref),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    child: Text(
+                      res.paymentVerified
+                          ? 'Valider la location'
+                          : 'Verifier et valider',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => _update(
-                    context, ref, ReservationStatus.confirmed),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary),
-                child: const Text('Confirmer',
-                    style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () => _deletePendingReservation(context, ref),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: AppColors.error,
+                ),
+                label: const Text(
+                  'Supprimer cette demande',
+                  style: TextStyle(color: AppColors.error),
+                ),
               ),
             ),
           ],
@@ -231,23 +316,59 @@ class _AdminResCard extends ConsumerWidget {
       case ReservationStatus.confirmed:
         return SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => _update(
-                context, ref, ReservationStatus.active),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary),
-            child: const Text('Marquer En cours'),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _update(context, ref, ReservationStatus.active),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                  ),
+                  child: const Text('Marquer En cours'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _markNoShow(context, ref),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error),
+                  ),
+                  child: const Text('Non-presentation'),
+                ),
+              ),
+            ],
           ),
         );
       case ReservationStatus.active:
         return SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => _update(
-                context, ref, ReservationStatus.completed),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success),
-            child: const Text('Marquer Terminée'),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _update(context, ref, ReservationStatus.completed),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                  ),
+                  child: const Text('Marquer Terminee'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _markNoShow(context, ref),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error),
+                  ),
+                  child: const Text('Non-presentation'),
+                ),
+              ),
+            ],
           ),
         );
       default:
@@ -255,15 +376,80 @@ class _AdminResCard extends ConsumerWidget {
     }
   }
 
-  Future<void> _update(BuildContext context, WidgetRef ref,
-      ReservationStatus status) async {
-    await ref
-        .read(reservationServiceProvider)
-        .updateStatus(res.id, status);
+  Future<void> _update(
+    BuildContext context,
+    WidgetRef ref,
+    ReservationStatus status,
+  ) async {
+    await ref.read(reservationServiceProvider).updateStatus(res.id, status);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Statut mis à jour'),
+        const SnackBar(
+          content: Text('Statut mis a jour'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
+  Future<void> _verifyAndConfirm(BuildContext context, WidgetRef ref) async {
+    await ref.read(reservationServiceProvider).verifyPaymentAndConfirm(res.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Paiement verifie et location validee'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
+  Future<void> _markNoShow(BuildContext context, WidgetRef ref) async {
+    await ref.read(reservationServiceProvider).markNoShow(res.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reservation marquee en non-presentation'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deletePendingReservation(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer la demande ?'),
+        content: const Text(
+          'Cette demande de reservation sera supprimee definitivement.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Supprimer',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await ref.read(reservationServiceProvider).deleteReservation(res.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Demande supprimee'),
           backgroundColor: AppColors.success,
         ),
       );

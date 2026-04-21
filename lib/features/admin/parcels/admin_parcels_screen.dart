@@ -7,6 +7,7 @@ import '../../../core/widgets/empty_state_widget.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/parcel_model.dart';
 import '../../../providers/parcel_provider.dart';
+import '../../../services/map_launcher_service.dart';
 
 class AdminParcelsScreen extends ConsumerStatefulWidget {
   const AdminParcelsScreen({super.key});
@@ -16,8 +17,7 @@ class AdminParcelsScreen extends ConsumerStatefulWidget {
       _AdminParcelsScreenState();
 }
 
-class _AdminParcelsScreenState
-    extends ConsumerState<AdminParcelsScreen>
+class _AdminParcelsScreenState extends ConsumerState<AdminParcelsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
@@ -53,7 +53,7 @@ class _AdminParcelsScreenState
             Tab(text: 'Tous'),
             Tab(text: 'En attente'),
             Tab(text: 'En transit'),
-            Tab(text: 'Livrés'),
+            Tab(text: 'Livres'),
           ],
         ),
       ),
@@ -61,8 +61,7 @@ class _AdminParcelsScreenState
         data: (list) {
           final all = list;
           final pending = list
-              .where((p) =>
-                  p.status == ParcelStatus.pending)
+              .where((p) => p.status == ParcelStatus.pending)
               .toList();
           final transit = list
               .where((p) =>
@@ -70,8 +69,7 @@ class _AdminParcelsScreenState
                   p.status == ParcelStatus.inTransit)
               .toList();
           final done = list
-              .where((p) =>
-                  p.status == ParcelStatus.delivered)
+              .where((p) => p.status == ParcelStatus.delivered)
               .toList();
 
           return TabBarView(
@@ -84,10 +82,8 @@ class _AdminParcelsScreenState
             ],
           );
         },
-        loading: () =>
-            const ShimmerList(count: 4, itemHeight: 120),
-        error: (e, _) =>
-            Center(child: Text('Erreur: $e')),
+        loading: () => const ShimmerList(count: 4, itemHeight: 120),
+        error: (e, _) => Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -101,15 +97,15 @@ class _ParcelList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (parcels.isEmpty) {
       return const EmptyStateWidget(
-          icon: Icons.inventory_2_outlined,
-          title: 'Aucun colis dans cette catégorie');
+        icon: Icons.inventory_2_outlined,
+        title: 'Aucun colis dans cette categorie',
+      );
     }
     return ListView.separated(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       itemCount: parcels.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, i) =>
-          _AdminParcelCard(parcel: parcels[i]),
+      itemBuilder: (_, i) => _AdminParcelCard(parcel: parcels[i]),
     );
   }
 }
@@ -126,7 +122,7 @@ class _AdminParcelCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 6)
+          BoxShadow(color: AppColors.shadow, blurRadius: 6),
         ],
       ),
       child: Column(
@@ -137,46 +133,51 @@ class _AdminParcelCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.getStatusBgColor(
-                      parcel.status.name),
+                  color: AppColors.getStatusBgColor(parcel.status.name),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.inventory_2_rounded,
-                    size: 18,
-                    color: AppColors.getStatusColor(
-                        parcel.status.name)),
+                child: Icon(
+                  Icons.inventory_2_rounded,
+                  size: 18,
+                  color: AppColors.getStatusColor(parcel.status.name),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(parcel.trackingCode,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700)),
                     Text(
-                        '${parcel.senderName} → ${parcel.recipientName}',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary)),
+                      parcel.trackingCode,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '${parcel.senderName} -> ${parcel.recipientName}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.getStatusBgColor(
-                      parcel.status.name),
+                  color: AppColors.getStatusBgColor(parcel.status.name),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(parcel.statusLabel,
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.getStatusColor(
-                            parcel.status.name))),
+                child: Text(
+                  parcel.statusLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getStatusColor(parcel.status.name),
+                  ),
+                ),
               ),
             ],
           ),
@@ -186,20 +187,89 @@ class _AdminParcelCard extends ConsumerWidget {
           Row(
             children: [
               _Chip(
-                  icon: Icons.scale_outlined,
-                  label: '${parcel.weight} kg'),
+                icon: Icons.scale_outlined,
+                label: '${parcel.weight} kg',
+              ),
               const SizedBox(width: 10),
               _Chip(
-                  icon: Icons.local_shipping_outlined,
-                  label: parcel.typeLabel),
+                icon: Icons.local_shipping_outlined,
+                label: parcel.typeLabel,
+              ),
               const Spacer(),
-              Text(FormatUtils.formatPrice(parcel.price),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                      fontSize: 13)),
+              Text(
+                FormatUtils.formatPrice(parcel.price),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
+          if (parcel.senderLatitude != null && parcel.senderLongitude != null ||
+              parcel.recipientLatitude != null && parcel.recipientLongitude != null) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (parcel.senderLatitude != null && parcel.senderLongitude != null)
+                  OutlinedButton.icon(
+                    onPressed: () => MapLauncherService.openPoint(
+                      latitude: parcel.senderLatitude!,
+                      longitude: parcel.senderLongitude!,
+                    ),
+                    icon: const Icon(Icons.place_outlined, size: 16),
+                    label: const Text('Depart'),
+                  ),
+                if (parcel.recipientLatitude != null &&
+                    parcel.recipientLongitude != null)
+                  OutlinedButton.icon(
+                    onPressed: () => MapLauncherService.openPoint(
+                      latitude: parcel.recipientLatitude!,
+                      longitude: parcel.recipientLongitude!,
+                    ),
+                    icon: const Icon(Icons.flag_outlined, size: 16),
+                    label: const Text('Destination'),
+                  ),
+                if (parcel.senderLatitude != null &&
+                    parcel.senderLongitude != null &&
+                    parcel.recipientLatitude != null &&
+                    parcel.recipientLongitude != null)
+                  ElevatedButton.icon(
+                    onPressed: () => MapLauncherService.openDirections(
+                      fromLat: parcel.senderLatitude!,
+                      fromLng: parcel.senderLongitude!,
+                      toLat: parcel.recipientLatitude!,
+                      toLng: parcel.recipientLongitude!,
+                    ),
+                    icon: const Icon(Icons.alt_route_rounded, size: 16),
+                    label: const Text('Itineraire'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.info,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+          if (parcel.status == ParcelStatus.pending) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _deletePendingParcel(context, ref),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: AppColors.error,
+                ),
+                label: const Text(
+                  'Supprimer la demande',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ),
+          ],
           if (parcel.status != ParcelStatus.delivered &&
               parcel.status != ParcelStatus.cancelled) ...[
             const SizedBox(height: 10),
@@ -211,6 +281,46 @@ class _AdminParcelCard extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _deletePendingParcel(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer la demande ?'),
+        content: const Text(
+          'Cette demande d\'envoi sera supprimee definitivement.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Supprimer',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await ref.read(parcelServiceProvider).deleteParcel(parcel.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Demande supprimee'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
 }
 
 class _NextStatusButton extends ConsumerWidget {
@@ -219,6 +329,42 @@ class _NextStatusButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (parcel.status == ParcelStatus.pending && !parcel.paymentVerified) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _verifyAndPickup(context, ref),
+          icon: const Icon(Icons.verified_rounded, size: 16),
+          label: const Text(
+            'Verifier paiement et prendre en charge',
+            style: TextStyle(fontSize: 13),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            minimumSize: const Size(double.infinity, 40),
+          ),
+        ),
+      );
+    }
+
+    if (parcel.status == ParcelStatus.pending && parcel.paymentVerified) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _pickupPaidParcel(context, ref),
+          icon: const Icon(Icons.local_shipping_rounded, size: 16),
+          label: const Text(
+            'Prendre en charge le colis',
+            style: TextStyle(fontSize: 13),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            minimumSize: const Size(double.infinity, 40),
+          ),
+        ),
+      );
+    }
+
     ParcelStatus? next;
     String? label;
     String? historyLabel;
@@ -236,8 +382,8 @@ class _NextStatusButton extends ConsumerWidget {
         break;
       case ParcelStatus.inTransit:
         next = ParcelStatus.delivered;
-        label = 'Marquer Livré';
-        historyLabel = 'Colis livré avec succès';
+        label = 'Marquer Livre';
+        historyLabel = 'Colis livre avec succes';
         break;
       default:
         return const SizedBox();
@@ -260,14 +406,135 @@ class _NextStatusButton extends ConsumerWidget {
           }
         },
         icon: const Icon(Icons.check_rounded, size: 16),
-        label: Text(label,
-            style: const TextStyle(fontSize: 13)),
+        label: Text(label, style: const TextStyle(fontSize: 13)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.secondary,
           minimumSize: const Size(double.infinity, 40),
         ),
       ),
     );
+  }
+
+  Future<void> _verifyAndPickup(BuildContext context, WidgetRef ref) async {
+    final controller =
+        TextEditingController(text: parcel.emergencyContactNumber ?? '');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Verifier le paiement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ajoutez le numero du service d\'urgence avant la prise en charge du colis.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Contact d\'urgence',
+                hintText: '+229 ...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      controller.dispose();
+      return;
+    }
+
+    await ref.read(parcelServiceProvider).verifyPaymentAndPickup(
+          parcel.id,
+          emergencyContact:
+              controller.text.trim().isEmpty ? null : controller.text.trim(),
+        );
+    controller.dispose();
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Paiement verifie et colis pris en charge'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickupPaidParcel(BuildContext context, WidgetRef ref) async {
+    final controller =
+        TextEditingController(text: parcel.emergencyContactNumber ?? '');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Prendre en charge le colis'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Renseignez le contact d\'urgence a communiquer au client avant la prise en charge.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Contact d\'urgence',
+                hintText: '+229 ...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      controller.dispose();
+      return;
+    }
+
+    await ref.read(parcelServiceProvider).verifyPaymentAndPickup(
+          parcel.id,
+          emergencyContact:
+              controller.text.trim().isEmpty ? null : controller.text.trim(),
+        );
+    controller.dispose();
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Colis pris en charge'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 }
 
@@ -283,9 +550,13 @@ class _Chip extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: AppColors.textSecondary),
         const SizedBox(width: 4),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
       ],
     );
   }

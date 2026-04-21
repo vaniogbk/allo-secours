@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/format_utils.dart';
+import '../../../core/widgets/cloudinary_image.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/notification_model.dart';
@@ -19,8 +20,7 @@ class CarBookingScreen extends ConsumerStatefulWidget {
   const CarBookingScreen({super.key, required this.carId});
 
   @override
-  ConsumerState<CarBookingScreen> createState() =>
-      _CarBookingScreenState();
+  ConsumerState<CarBookingScreen> createState() => _CarBookingScreenState();
 }
 
 class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
@@ -43,7 +43,7 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Réserver'),
+        title: const Text('Reserver'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
@@ -58,7 +58,6 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Car info card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -70,39 +69,43 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: car.mainPhoto != null
-                                ? Image.network(
-                                    car.mainPhoto!,
+                                ? CloudinaryImage(
+                                    imageUrl: car.mainPhoto!,
                                     width: 80,
                                     height: 64,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        _imgPlaceholder(),
+                                    optimizedWidth: 300,
+                                    errorWidget: _imgPlaceholder(),
                                   )
                                 : _imgPlaceholder(),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(car.fullName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 15)),
+                                Text(
+                                  car.fullName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${FormatUtils.formatPrice(car.pricePerDay)}/jour',
                                   style: const TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13),
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
                                 Text(
                                   'Caution: ${FormatUtils.formatPrice(car.deposit)}',
                                   style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12),
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
@@ -111,10 +114,10 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Sélectionnez vos dates',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700)),
+                    const Text(
+                      'Selectionnez vos dates',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
@@ -123,28 +126,23 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                       ),
                       child: TableCalendar(
                         firstDay: DateTime.now(),
-                        lastDay: DateTime.now()
-                            .add(const Duration(days: 365)),
+                        lastDay: DateTime.now().add(const Duration(days: 365)),
                         focusedDay: _focusedDay,
                         rangeStartDay: _startDate,
                         rangeEndDay: _endDate,
-                        rangeSelectionMode:
-                            RangeSelectionMode.toggledOn,
+                        rangeSelectionMode: RangeSelectionMode.toggledOn,
                         onDaySelected: (selected, focused) {
                           setState(() {
                             _focusedDay = focused;
                             if (_startDate == null ||
-                                (_startDate != null &&
-                                    _endDate != null)) {
+                                (_startDate != null && _endDate != null)) {
                               _startDate = selected;
                               _endDate = null;
                             } else {
-                              if (selected
-                                  .isBefore(_startDate!)) {
+                              if (selected.isBefore(_startDate!)) {
                                 _endDate = _startDate;
                                 _startDate = selected;
-                              } else if (selected
-                                  .isAtSameMomentAs(_startDate!)) {
+                              } else if (selected.isAtSameMomentAs(_startDate!)) {
                                 _startDate = null;
                               } else {
                                 _endDate = selected;
@@ -159,25 +157,25 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                             _focusedDay = focused;
                           });
                         },
-                        onPageChanged: (f) =>
-                            setState(() => _focusedDay = f),
+                        onPageChanged: (f) => setState(() => _focusedDay = f),
                         calendarStyle: CalendarStyle(
-                          rangeHighlightColor:
-                              AppColors.primaryLight,
+                          rangeHighlightColor: AppColors.primaryLight,
                           rangeStartDecoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle),
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
                           rangeEndDecoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle),
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
                           todayDecoration: BoxDecoration(
-                            color:
-                                AppColors.primary.withOpacity(0.3),
+                            color: AppColors.primary.withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle),
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         headerStyle: const HeaderStyle(
                           formatButtonVisible: false,
@@ -196,16 +194,14 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                         child: Column(
                           children: [
                             _SummaryRow(
-                              label: 'Date de début',
-                              value: AppDateUtils.formatDate(
-                                  _startDate!),
+                              label: 'Date de debut',
+                              value: AppDateUtils.formatDate(_startDate!),
                             ),
                             if (_endDate != null) ...[
                               const Divider(height: 20),
                               _SummaryRow(
                                 label: 'Date de fin',
-                                value: AppDateUtils.formatDate(
-                                    _endDate!),
+                                value: AppDateUtils.formatDate(_endDate!),
                               ),
                               const Divider(height: 20),
                               _SummaryRow(
@@ -216,20 +212,20 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
                               _SummaryRow(
                                 label: 'Location',
                                 value: FormatUtils.formatPrice(
-                                    _totalDays * car.pricePerDay),
+                                  _totalDays * car.pricePerDay,
+                                ),
                               ),
                               const Divider(height: 20),
                               _SummaryRow(
                                 label: 'Caution',
-                                value: FormatUtils.formatPrice(
-                                    car.deposit),
+                                value: FormatUtils.formatPrice(car.deposit),
                               ),
                               const Divider(height: 20),
                               _SummaryRow(
-                                label: 'Total à payer',
+                                label: 'Total a payer',
                                 value: FormatUtils.formatPrice(
-                                    _total(car.pricePerDay,
-                                        car.deposit)),
+                                  _total(car.pricePerDay, car.deposit),
+                                ),
                                 isTotal: true,
                               ),
                             ],
@@ -246,17 +242,19 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
               padding: const EdgeInsets.all(AppDimensions.paddingM),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                boxShadow: [
-                  BoxShadow(color: AppColors.shadow, blurRadius: 12)
-                ],
+                boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 12)],
               ),
               child: CustomButton(
                 label: _endDate != null
-                    ? 'Confirmer — ${FormatUtils.formatPrice(_total(car.pricePerDay, car.deposit))}'
-                    : 'Sélectionnez une date de fin',
+                    ? 'Confirmer - ${FormatUtils.formatPrice(_total(car.pricePerDay, car.deposit))}'
+                    : 'Selectionnez une date de fin',
                 onPressed: _endDate != null
-                    ? () => _book(car.pricePerDay, car.deposit,
-                        car.fullName, car.mainPhoto)
+                    ? () => _book(
+                          car.pricePerDay,
+                          car.deposit,
+                          car.fullName,
+                          car.mainPhoto,
+                        )
                     : null,
                 isLoading: _loading,
               ),
@@ -264,8 +262,7 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
           ],
         ),
         loading: () => const LoadingWidget(),
-        error: (e, _) =>
-            Center(child: Text('Erreur: $e')),
+        error: (e, _) => Center(child: Text('Erreur: $e')),
       ),
     );
   }
@@ -274,33 +271,23 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
         width: 80,
         height: 64,
         color: AppColors.primaryLight,
-        child: const Icon(Icons.directions_car_rounded,
-            color: AppColors.primary),
+        child: const Icon(
+          Icons.directions_car_rounded,
+          color: AppColors.primary,
+        ),
       );
 
-  Future<void> _book(double pricePerDay, double deposit,
-      String carName, String? carPhoto) async {
+  Future<void> _book(
+    double pricePerDay,
+    double deposit,
+    String carName,
+    String? carPhoto,
+  ) async {
     setState(() => _loading = true);
     try {
       final user = await ref.read(userStreamProvider.future);
-      final car = await ref
-          .read(carDetailProvider(widget.carId).future);
+      final car = await ref.read(carDetailProvider(widget.carId).future);
       final resService = ref.read(reservationServiceProvider);
-
-      final available = await resService.isCarAvailable(
-          widget.carId, _startDate!, _endDate!);
-      if (!available) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Cette voiture est déjà réservée pour ces dates'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-        return;
-      }
 
       final id = await resService.createReservation(
         user: user!,
@@ -311,18 +298,17 @@ class _CarBookingScreenState extends ConsumerState<CarBookingScreen> {
 
       await NotificationService.saveNotification(
         userId: user.id,
-        title: 'Réservation envoyée',
+        title: 'Reservation envoyee',
         body:
-            'Votre réservation pour $carName est en attente de confirmation.',
+            'Votre reservation pour $carName est en attente de confirmation.',
         type: NotificationType.reservation,
         refId: id,
       );
 
       if (mounted) {
-        // Rediriger vers le paiement
         final totalAmount = _total(pricePerDay, deposit);
         context.push(
-          '/payment?reservation_id=$id&amount=$totalAmount&item_name=${Uri.encodeComponent(carName)}&type=reservation',
+          '/payment?ref_id=$id&amount=$totalAmount&item_name=${Uri.encodeComponent(carName)}&type=reservation',
         );
       }
     } catch (e) {
@@ -344,32 +330,35 @@ class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
   final bool isTotal;
-  const _SummaryRow(
-      {required this.label,
-      required this.value,
-      this.isTotal = false});
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: isTotal ? 15 : 14,
-                fontWeight: isTotal
-                    ? FontWeight.w700
-                    : FontWeight.w400,
-                color: isTotal
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary)),
-        Text(value,
-            style: TextStyle(
-                fontSize: isTotal ? 16 : 14,
-                fontWeight: FontWeight.w700,
-                color: isTotal
-                    ? AppColors.primary
-                    : AppColors.textPrimary)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTotal ? 15 : 14,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
+            color: isTotal
+                ? AppColors.textPrimary
+                : AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 16 : 14,
+            fontWeight: FontWeight.w700,
+            color: isTotal ? AppColors.primary : AppColors.textPrimary,
+          ),
+        ),
       ],
     );
   }

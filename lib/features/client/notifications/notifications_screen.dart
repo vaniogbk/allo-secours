@@ -14,6 +14,38 @@ import '../../../services/notification_service.dart';
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
+  void _deleteAllDialog(BuildContext context, WidgetRef ref, String userId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+        title: const Text('Supprimer toutes les notifications ?'),
+        content: const Text(
+            'Cette action est irréversible. Toutes vos notifications seront supprimées.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await NotificationService.deleteAllNotifications(userId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Toutes les notifications supprimées')),
+                );
+              }
+            },
+            child: const Text('Supprimer',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifsAsync = ref.watch(notificationsProvider);
@@ -36,6 +68,13 @@ class NotificationsScreen extends ConsumerWidget {
             child: const Text('Tout lire',
                 style: TextStyle(color: AppColors.primary)),
           ),
+          TextButton(
+            onPressed: user != null
+                ? () => _deleteAllDialog(context, ref, user.uid)
+                : null,
+            child: const Text('Tout supprimer',
+                style: TextStyle(color: AppColors.error)),
+          ),
         ],
       ),
       body: notifsAsync.when(
@@ -53,7 +92,43 @@ class NotificationsScreen extends ConsumerWidget {
             separatorBuilder: (_, __) =>
                 const SizedBox(height: 8),
             itemBuilder: (_, i) =>
-                _NotifCard(notif: notifs[i]),
+                Dismissible(
+                  key: Key(notifs[i].id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    color: AppColors.error,
+                    child: const Icon(Icons.delete_forever_rounded,
+                        color: Colors.white),
+                  ),
+                  confirmDismiss: (_) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        title: const Text('Supprimer la notification ?'),
+                        content: const Text(
+                            'Cette notification sera supprimée définitivement.'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Annuler')),
+                          TextButton(
+                            onPressed: () async {
+                              await NotificationService.deleteNotification(notifs[i].id);
+                              Navigator.pop(context, true);
+                            },
+                            child: const Text('Supprimer',
+                                style: TextStyle(color: AppColors.error)),
+                          ),
+                        ],
+                      ),
+                    ) ?? false;
+                  },
+                  child: _NotifCard(notif: notifs[i]),
+                ),
           );
         },
         loading: () =>

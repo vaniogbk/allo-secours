@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/format_utils.dart';
+import '../../../core/widgets/cloudinary_image.dart';
 import '../../../core/widgets/empty_state_widget.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../models/car_model.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../providers/car_provider.dart';
 
 class CarListScreen extends ConsumerStatefulWidget {
@@ -22,7 +24,36 @@ class _CarListScreenState extends ConsumerState<CarListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authAsync = ref.watch(authStateProvider);
     final carsAsync = ref.watch(carsStreamProvider);
+
+    if (authAsync.isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Voitures disponibles'),
+        ),
+        body: const ShimmerList(count: 5, itemHeight: 180),
+      );
+    }
+
+    final currentUser = authAsync.valueOrNull;
+    if (currentUser == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Voitures disponibles'),
+        ),
+        body: const Center(
+          child: Text(
+            'Veuillez vous reconnecter pour voir les voitures.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -141,13 +172,13 @@ class _CarCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(AppDimensions.radiusL)),
                   child: car.mainPhoto != null
-                      ? Image.network(
-                          car.mainPhoto!,
+                      ? CloudinaryImage(
+                          imageUrl: car.mainPhoto!,
                           height: 180,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _placeholder(),
+                          optimizedWidth: 900,
+                          errorWidget: _placeholder(),
                         )
                       : _placeholder(),
                 ),

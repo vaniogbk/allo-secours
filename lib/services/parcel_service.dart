@@ -22,6 +22,10 @@ class ParcelService {
     required String recipientPhone,
     required String recipientAddress,
     required String senderAddress,
+    double? senderLatitude,
+    double? senderLongitude,
+    double? recipientLatitude,
+    double? recipientLongitude,
     required double weight,
     String? dimensions,
     required ParcelType type,
@@ -36,9 +40,13 @@ class ParcelService {
       'senderName': sender.fullName,
       'senderAddress': senderAddress,
       'senderPhone': sender.phone,
+      'senderLatitude': senderLatitude,
+      'senderLongitude': senderLongitude,
       'recipientName': recipientName,
       'recipientPhone': recipientPhone,
       'recipientAddress': recipientAddress,
+      'recipientLatitude': recipientLatitude,
+      'recipientLongitude': recipientLongitude,
       'weight': weight,
       'dimensions': dimensions,
       'type': type.name,
@@ -91,8 +99,70 @@ class ParcelService {
     return ParcelModel.fromDoc(snap.docs.first);
   }
 
+  Future<ParcelModel?> getUserParcelByTracking(
+    String userId,
+    String code,
+  ) async {
+    final snap = await _col
+        .where('senderId', isEqualTo: userId)
+        .where('trackingCode', isEqualTo: code)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    return ParcelModel.fromDoc(snap.docs.first);
+  }
+
   Stream<ParcelModel> parcelStream(String id) =>
       _col.doc(id).snapshots().map((d) => ParcelModel.fromDoc(d));
+
+  Future<void> updateParcel(
+    String id, {
+    required String recipientName,
+    required String recipientPhone,
+    required String recipientAddress,
+    required String senderAddress,
+    double? senderLatitude,
+    double? senderLongitude,
+    double? recipientLatitude,
+    double? recipientLongitude,
+    required double weight,
+    String? dimensions,
+    required ParcelType type,
+    String? note,
+  }) async {
+    final price = calculatePrice(weight, type);
+    final now = DateTime.now();
+    await _col.doc(id).update({
+      'recipientName': recipientName,
+      'recipientPhone': recipientPhone,
+      'recipientAddress': recipientAddress,
+      'senderAddress': senderAddress,
+      'senderLatitude': senderLatitude,
+      'senderLongitude': senderLongitude,
+      'recipientLatitude': recipientLatitude,
+      'recipientLongitude': recipientLongitude,
+      'weight': weight,
+      'dimensions': dimensions,
+      'type': type.name,
+      'price': price,
+      'note': note,
+      'estimatedDelivery': Timestamp.fromDate(
+        now.add(Duration(days: type == ParcelType.express ? 1 : 3)),
+      ),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> markPaymentVerified(String id) async {
+    await _col.doc(id).update({
+      'paymentVerified': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteParcel(String id) async {
+    await _col.doc(id).delete();
+  }
 
   Future<void> updateStatus(
     String id,
@@ -111,5 +181,34 @@ class ParcelService {
       'statusHistory': FieldValue.arrayUnion([entry]),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Marquer le paiement comme vérifié et mettre à jour le statut
+  Future<void> verifyPaymentAndPickup(String id, {String? emergencyContact}) async {
+    await _col.doc(id).update({
+      'paymentVerified': true,
+      'status': ParcelStatus.pickedUp.name,
+      'emergencyContactNumber': emergencyContact,
+      'statusHistory': FieldValue.arrayUnion([
+        {
+          'status': ParcelStatus.pickedUp.name,
+          'label': 'Paiement vérifié - Pris en charge',
+          'date': Timestamp.fromDate(DateTime.now()),
+          'note': 'Le colis a été pris en charge après vérification du paiement',
+        }
+      ]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Un colis reste modifiable tant qu'il n'a pas été pris en charge.
+  bool canModifyParcel(ParcelModel parcel) {
+    return parcel.status == ParcelStatus.pending;
+  }
+
+  /// Vérifier si le paiement d'un colis est vérifié
+  Future<bool> isPaymentVerified(String parcelId) async {
+    final doc = await _col.doc(parcelId).get();
+    return doc.get('paymentVerified') ?? false;
   }
 }
