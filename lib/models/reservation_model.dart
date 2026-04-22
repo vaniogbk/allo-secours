@@ -53,6 +53,21 @@ class ReservationModel {
   String get carFullName =>
       '${carBrand ?? ''} ${carModel ?? ''}'.trim();
 
+  String get statusKey {
+    switch (status) {
+      case ReservationStatus.pending:
+        return 'pending';
+      case ReservationStatus.confirmed:
+        return 'confirmed';
+      case ReservationStatus.active:
+        return 'active';
+      case ReservationStatus.completed:
+        return 'completed';
+      case ReservationStatus.cancelled:
+        return 'cancelled';
+    }
+  }
+
   String get statusLabel {
     switch (status) {
       case ReservationStatus.pending: return 'En attente';

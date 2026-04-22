@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -225,18 +224,6 @@ class _MobileMoneyPaymentScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez entrer votre numéro'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Paiement Mobile Money non pris en charge sur le web. Utilisez un appareil mobile.',
-          ),
           backgroundColor: AppColors.error,
         ),
       );

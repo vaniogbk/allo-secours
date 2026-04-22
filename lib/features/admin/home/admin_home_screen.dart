@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/format_utils.dart';
+import '../../../models/reservation_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/car_provider.dart';
 import '../../../providers/parcel_provider.dart';
@@ -263,7 +264,7 @@ class _DashboardPage extends ConsumerWidget {
     final totalRes = resAsync.valueOrNull?.length ?? 0;
     final activeRes = resAsync.valueOrNull
             ?.where(
-              (r) => r.status.name == 'active' || r.status.name == 'confirmed',
+              (r) => r.statusKey == 'active' || r.statusKey == 'confirmed',
             )
             .length ??
         0;
@@ -760,7 +761,7 @@ class _MiniInfo extends StatelessWidget {
 }
 
 class _RecentResTile extends StatelessWidget {
-  final dynamic res;
+  final ReservationModel res;
 
   const _RecentResTile({required this.res});
 
@@ -778,13 +779,13 @@ class _RecentResTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.getStatusBgColor(res.status.name),
+              color: AppColors.getStatusBgColor(res.statusKey),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.directions_car_rounded,
               size: 16,
-              color: AppColors.getStatusColor(res.status.name),
+              color: AppColors.getStatusColor(res.statusKey),
             ),
           ),
           const SizedBox(width: 10),
@@ -815,7 +816,7 @@ class _RecentResTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.getStatusBgColor(res.status.name),
+                  color: AppColors.getStatusBgColor(res.statusKey),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -823,7 +824,7 @@ class _RecentResTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.getStatusColor(res.status.name),
+                    color: AppColors.getStatusColor(res.statusKey),
                   ),
                 ),
               ),
